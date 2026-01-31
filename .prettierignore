@@ -1,0 +1,22 @@
+# 依赖
+node_modules
+.pnpm-store
+
+# 构建输出
+.nuxt
+.output
+dist
+
+# 缓存
+.cache
+
+# 环境变量
+.env
+.env.*
+
+# 日志
+*.log
+
+# 其他
+coverage
+.nitro

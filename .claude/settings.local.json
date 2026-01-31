@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm rebuild:*)",
+      "Bash(npm run build-release:*)",
+      "Bash(dir \"D:\\\\visualStudio\\\\VC\\\\Tools\\\\MSVC\")",
+      "Bash(set:*)",
+      "Bash(\"D:\\\\visualStudio\\\\VC\\\\Auxiliary\\\\Build\\\\vswhere.exe\" -products * -latest)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx node-pre-gyp install:*)",
+      "Bash(npx prebuild-install:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}
