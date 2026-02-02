@@ -1,0 +1,201 @@
+### ========================================
+### Blog API 测试集合
+### 端口: http://localhost:3001
+### ========================================
+
+### ========================================
+### 1. 文章列表
+### ========================================
+
+### 获取所有文章
+GET http://localhost:3000/api/posts
+
+###
+
+### 获取已发布的文章
+GET http://localhost:3001/api/posts?status=published
+
+###
+
+### 按分类筛选
+GET http://localhost:3001/api/posts?category=技术
+
+###
+
+### ========================================
+### 2. 创建文章
+### ========================================
+
+### 创建草稿文章
+POST http://localhost:3000/api/posts
+Content-Type: application/json
+
+{
+  "title": "我的第一篇文章",
+  "content": "这是文章的详细内容...",
+  "status": "draft"
+}
+
+###
+
+### 创建并发布文章
+POST http://localhost:3001/api/posts
+Content-Type: application/json
+
+{
+  "title": "Zod 验证库入门教程",
+  "content": "这是一篇关于 Zod 的详细教程内容...\n\nZod 是一个 TypeScript-first 的数据验证库。",
+  "summary": "学习如何使用 Zod 进行数据验证",
+  "status": "published",
+  "category": "技术",
+  "tags": ["TypeScript", "验证", "前端"],
+  "cover_image": "https://example.com/cover.jpg"
+}
+
+###
+
+### ========================================
+### 3. 获取文章详情
+### ========================================
+
+### 获取 ID 为 1 的文章
+GET http://localhost:3000/api/posts/13
+
+###
+
+### ========================================
+### 4. 更新文章
+### ========================================
+
+### 更新标题和内容
+PUT http://localhost:3001/api/posts/1
+Content-Type: application/json
+
+{
+  "title": "更新后的标题",
+  "content": "更新后的内容"
+}
+
+###
+
+### 只更新状态
+PUT http://localhost:3001/api/posts/1
+Content-Type: application/json
+
+{
+  "status": "published"
+}
+
+###
+
+### 更新分类和标签
+PUT http://localhost:3001/api/posts/1
+Content-Type: application/json
+
+{
+  "category": "前端开发",
+  "tags": ["TypeScript", "Vue", "Nuxt"]
+}
+
+###
+
+### ========================================
+### 5. 发布/撤回文章
+### ========================================
+
+### 发布文章
+POST http://localhost:3001/api/posts/1/publish
+Content-Type: application/json
+
+{
+  "action": "publish"
+}
+
+###
+
+### 撤回文章
+POST http://localhost:3001/api/posts/1/publish
+Content-Type: application/json
+
+{
+  "action": "unpublish"
+}
+
+###
+
+### ========================================
+### 6. 删除文章
+### ========================================
+
+### 删除 ID 为 2 的文章
+DELETE http://localhost:3001/api/posts/2
+
+###
+
+### ========================================
+### 错误测试
+### ========================================
+
+### 测试：缺少必填字段 title
+POST http://localhost:3001/api/posts
+Content-Type: application/json
+
+{
+  "content": "没有标题的文章"
+}
+
+###
+
+### 测试：标题为空
+POST http://localhost:3001/api/posts
+Content-Type: application/json
+
+{
+  "title": "",
+  "content": "标题是空的"
+}
+
+###
+
+### 测试：标题超过 200 字符
+POST http://localhost:3001/api/posts
+Content-Type: application/json
+
+{
+  "title": "这是一个非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常长的标题超过了200个字符的限制",
+  "content": "内容"
+}
+
+###
+
+### 测试：无效的 URL
+POST http://localhost:3001/api/posts
+Content-Type: application/json
+
+{
+  "title": "测试文章",
+  "content": "内容",
+  "cover_image": "not-a-valid-url"
+}
+
+###
+
+### 测试：无效的 ID（非数字）
+GET http://localhost:3001/api/posts/abc
+
+###
+
+### 测试：无效的 ID（负数）
+GET http://localhost:3001/api/posts/-1
+
+###
+
+### 测试：无效的 action
+POST http://localhost:3001/api/posts/1/publish
+Content-Type: application/json
+
+{
+  "action": "invalid-action"
+}
+
+###

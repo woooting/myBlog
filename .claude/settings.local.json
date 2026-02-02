@@ -16,7 +16,17 @@
       "mcp__context7__get-library-docs",
       "Bash(tree:*)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "WebSearch",
+      "Bash(bash:*)",
+      "Bash(echo:*)",
+      "Bash(pnpm nuxt:*)",
+      "Bash(grep:*)"
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node C:\\Users\\lijinghao\\.claude\\statusline.js"
+  },
+  "outputStyle": "Explanatory"
 }

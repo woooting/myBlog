@@ -1,0 +1,9 @@
+{
+  "extends": "../.nuxt/tsconfig.server.json",
+  "include": ["../.nuxt/types/**/*.d.ts"],
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "outDir": "../.tsbuild/server"
+  }
+}

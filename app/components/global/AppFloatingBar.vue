@@ -5,76 +5,60 @@
       <span class="logo">MyBlog</span>
     </div>
 
-    <!-- 中间：搜索框 -->
-    <div class="bar-center">
-      <input type="text" placeholder="搜索文章..." class="search-input" />
-    </div>
-
     <!-- 右侧：图标 -->
     <div class="bar-right">
-      <button class="icon-btn">🌙</button>
-      <button class="icon-btn">🔔</button>
+      <button class="icon-btn">
+        <Icon name="lucide:search" />
+      </button>
+      <button class="icon-btn theme-btn" @click="toggleTheme">
+        <Icon :name="isDark ? 'lucide:moon' : 'lucide:sun'" />
+      </button>
+      <button class="icon-btn">
+        <Icon name="lucide:bell" />
+      </button>
+      <button class="icon-btn">
+        <Icon name="lucide:user" />
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 后续可以添加搜索、主题切换等功能
+const { theme, toggleTheme, isDark } = useTheme()
 </script>
 
 <style lang="scss" scoped>
 .floating-bar {
   position: fixed;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
 
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: space-between;
 
-  width: 90%;
-  max-width: 600px;
-  padding: 0.75rem 1.5rem;
+  width: 100%;
+  height: 60px;
+  padding: 0 2rem;
 
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 999px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: rgba(218, 217, 217, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-color);
 
   z-index: 1000;
 }
 
-.bar-left {
-  .logo {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #333;
-    letter-spacing: -0.5px;
-  }
+.dark .floating-bar {
+  background: rgba(24, 24, 24, 0.7);
 }
 
-.bar-center {
-  flex: 1;
-
-  .search-input {
-    width: 100%;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 999px;
-    background: #f5f5f5;
-    font-size: 0.9rem;
-    outline: none;
-    transition: all 0.2s;
-
-    &:focus {
-      background: #ebebeb;
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
-    }
-
-    &::placeholder {
-      color: #999;
-    }
+.bar-left {
+  .logo {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
   }
 }
 
@@ -83,18 +67,20 @@
   gap: 0.5rem;
 
   .icon-btn {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border: none;
     border-radius: 50%;
-    background: #f5f5f5;
-    font-size: 1rem;
+    background: transparent;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
 
     &:hover {
-      background: #ebebeb;
-      transform: scale(1.05);
+      background: var(--bg-tertiary);
     }
 
     &:active {
