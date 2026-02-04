@@ -21,12 +21,16 @@
       "Bash(bash:*)",
       "Bash(echo:*)",
       "Bash(pnpm nuxt:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(timeout:*)",
+      "Bash(pnpm view:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm config set:*)"
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "node C:\\Users\\lijinghao\\.claude\\statusline.js"
   },
-  "outputStyle": "Explanatory"
+  "outputStyle": "Learning"
 }

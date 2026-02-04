@@ -13,7 +13,7 @@ GET http://localhost:3000/api/posts
 ###
 
 ### 获取已发布的文章
-GET http://localhost:3001/api/posts?status=published
+GET http://localhost:3000/api/posts?status=published
 
 ###
 
@@ -31,15 +31,15 @@ POST http://localhost:3000/api/posts
 Content-Type: application/json
 
 {
-  "title": "我的第一篇文章",
-  "content": "这是文章的详细内容...",
+  "title": "21312131223123",
+  "content": "我搜几个GH asf...",
   "status": "draft"
 }
 
 ###
 
 ### 创建并发布文章
-POST http://localhost:3001/api/posts
+POST http://localhost:3000/api/posts
 Content-Type: application/json
 
 {
@@ -59,7 +59,7 @@ Content-Type: application/json
 ### ========================================
 
 ### 获取 ID 为 1 的文章
-GET http://localhost:3000/api/posts/13
+GET http://localhost:3000/api/posts/5
 
 ###
 

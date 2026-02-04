@@ -27,4 +27,5 @@ export interface ApiRequestConfig {
   body?: any
   timeout?: number
   signal?: AbortSignal
+  showToast?: boolean  // 是否显示 toast 提示
 }
