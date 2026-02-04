@@ -2,21 +2,21 @@
   <div class="navlist">
     <NuxtLink :to="item.path" class="navlist-item" v-for="item in navList" :key="item.path">
       <Icon :name="item.iconname" class="itemicon" />
-      {{ item.name }}
+      <span class="itemname">{{ item.name }}</span>
     </NuxtLink>
   </div>
 </template>
 <script setup lang="ts">
 const navList = [
   {
+    name: 'Home',
+    path: '/',
+    iconname: 'lucide:home',
+  },
+  {
     name: 'code Article',
     path: '/category/codearticle',
     iconname: 'lucide:code-xml',
-  },
-  {
-    name: 'Tool',
-    path: '/category/tool',
-    iconname: 'lucide:wrench',
   },
   {
     name: 'Life Insights',
@@ -41,14 +41,41 @@ const navList = [
     cursor: pointer;
     height: 50px;
     background-color: var(--bg-secondary);
+    transition: background 0.2s ease;
+    overflow: hidden; // 隐藏收缩后的文字
+
     &:hover {
       background: var(--bg-tertiary);
     }
 
     .itemicon {
-      height: 100%;
-      width: 25px;
-      margin: 0 10px;
+      width: 24px;
+      height: 24px;
+      margin: 0 13px;
+      flex-shrink: 0;
+      transition: margin 0.3s ease;
+    }
+
+    .itemname {
+      flex-shrink: 0;
+      white-space: nowrap;
+      transition: opacity 0.2s ease, width 0.2s ease;
+    }
+  }
+
+  // 收缩状态
+  @media (max-width: 980px) {
+    .navlist-item {
+      justify-content: center;
+
+      .itemicon {
+        margin: 0;
+      }
+
+      .itemname {
+        opacity: 0;
+        width: 0;
+      }
     }
   }
 }
