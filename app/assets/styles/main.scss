@@ -54,3 +54,32 @@ html {
 .box-border {
   box-sizing: border-box;
 }
+
+// ========== 文本省略工具类 ==========
+
+// 单行省略（直接使用类名）
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行省略 Mixin（需要参数指定行数）
+@mixin text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  // 兼容性回退
+  display: block;
+}
+
+// 常用多行省略类
+.text-clamp-2 {
+  @include text-clamp(2);
+}
+
+.text-clamp-3 {
+  @include text-clamp(3);
+}
