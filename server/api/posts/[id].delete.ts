@@ -1,5 +1,6 @@
 import { validateParams } from '@server/utils/validation'
 import { postParamsSchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 删除文章
@@ -14,7 +15,5 @@ export default defineEventHandler(async (event) => {
   const { postsService } = await import('@server/services/posts.service')
   postsService.delete(id)
 
-  return {
-    success: true,
-  }
+  return successResponse(null, '文章删除成功')
 })

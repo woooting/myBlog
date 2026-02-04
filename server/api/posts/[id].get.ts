@@ -1,5 +1,6 @@
 import { validateParams } from '@server/utils/validation'
 import { postParamsSchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 获取文章详情
@@ -14,8 +15,5 @@ export default defineEventHandler(async (event) => {
   const { postsService } = await import('@server/services/posts.service')
   const post = postsService.getById(id)
 
-  return {
-    success: true,
-    data: post,
-  }
+  return successResponse(post)
 })

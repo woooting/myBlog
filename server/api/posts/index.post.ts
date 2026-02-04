@@ -1,5 +1,6 @@
 import { validateBody } from '@server/utils/validation'
 import { createPostSchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 创建文章
@@ -28,11 +29,8 @@ export default defineEventHandler(async (event) => {
     cover_image: body.cover_image,
   })
 
-  return {
-    success: true,
-    data: {
-      id: result.lastInsertRowid as number,
-      ...body,
-    },
-  }
+  return successResponse({
+    id: result.lastInsertRowid as number,
+    ...body,
+  }, '文章创建成功')
 })

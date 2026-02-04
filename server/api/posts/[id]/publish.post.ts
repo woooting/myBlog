@@ -1,5 +1,6 @@
 import { validateParams, validateBody } from '@server/utils/validation'
 import { postParamsSchema, publishActionSchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 发布/撤回文章
@@ -21,9 +22,9 @@ export default defineEventHandler(async (event) => {
 
   if (action === 'publish') {
     postsService.publish(id)
-    return { success: true, message: '文章已发布' }
+    return successResponse(null, '文章已发布')
   } else {
     postsService.unpublish(id)
-    return { success: true, message: '文章已撤回' }
+    return successResponse(null, '文章已撤回')
   }
 })

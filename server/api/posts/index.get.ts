@@ -1,5 +1,6 @@
 import { validateQuery } from '@server/utils/validation'
 import { getListQuerySchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 获取文章列表
@@ -12,7 +13,7 @@ import { getListQuerySchema } from '@server/schemas/post.schema'
  */
 export default defineEventHandler(async (event) => {
   // 验证查询参数
-  const query = await validateQuery(event, getListQuerySchema) 
+  const query = await validateQuery(event, getListQuerySchema)
 
   const { postsService } = await import('@server/services/posts.service')
   const posts = postsService.getList({
@@ -20,8 +21,5 @@ export default defineEventHandler(async (event) => {
     category: query.category,
   })
 
-  return {
-    success: true,
-    data: posts,
-  }
+  return successResponse(posts)
 })

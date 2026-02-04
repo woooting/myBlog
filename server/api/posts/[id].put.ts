@@ -1,5 +1,6 @@
 import { validateParams, validateBody } from '@server/utils/validation'
 import { postParamsSchema, updatePostSchema } from '@server/schemas/post.schema'
+import { successResponse } from '@server/utils/response'
 
 /**
  * 更新文章
@@ -33,7 +34,5 @@ export default defineEventHandler(async (event) => {
 
   postsService.update(id, updateData)
 
-  return {
-    success: true,
-  }
+  return successResponse(null, '文章更新成功')
 })
