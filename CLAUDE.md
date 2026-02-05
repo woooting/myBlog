@@ -6,6 +6,68 @@
 
 ---
 
+## ⚠️ 重要注意事项：Nuxt 4 自动导入机制
+
+**在 `app/` 目录下的所有文件中，永远不要从 `vue` 中导入任何类型、Hook 或 API！**
+
+### ❌ 禁止的导入
+
+```typescript
+// 以下导入方式在 app/ 目录下都是禁止的：
+import { ref, computed, onMounted, watch } from 'vue'
+import type { Ref, ComputedRef } from 'vue'
+```
+
+### ✅ 正确做法
+
+```typescript
+// 所有 Vue API 和类型都是自动导入的，直接使用
+const count = ref(0)
+const doubled = computed(() => count.value * 2)
+
+onMounted(() => {
+  console.log('mounted')
+})
+
+watch(count, (newValue) => {
+  console.log(newValue)
+})
+
+// 类型也是自动导入的，无需 import type
+function processValue(value: Ref<number>) {
+  // ...
+}
+```
+
+### 原因
+
+Nuxt 4 会自动导入所有 Vue 的 Composition API、响应式 API 和类型定义：
+- **响应式 API**：`ref`, `computed`, `reactive`, `readonly` 等
+- **生命周期 Hook**：`onMounted`, `onBeforeUnmount`, `watch` 等
+- **类型定义**：`Ref`, `ComputedRef`, `Writable` 等
+- **Nuxt 专属 API**：`useRouter`, `useRoute`, `useNuxtApp` 等
+
+手动导入会导致：
+- 模块解析错误
+- 运行时冲突
+- 构建失败
+
+### 唯一需要导入的
+
+```typescript
+// ✅ 第三方库的组件和工具
+import { useEditor } from '@tiptap/vue-3'
+import { Markdown } from 'tiptap-markdown'
+
+// ✅ 相对路径的本地模块
+import { myUtil } from '../utils/myUtil'
+
+// ✅ 类型定义从其他包
+import type { SomeType } from 'some-library'
+```
+
+---
+
 ## 项目概述
 
 基于 Nuxt 4 的个人博客项目，采用**双层内容管理**架构：
@@ -19,6 +81,7 @@
 - **Sass** - 样式预处理器
 - **better-sqlite3** - 嵌入式数据库
 - **@nuxt/icon** - 图标系统
+- **TipTap** - 富文本编辑器
 
 项目使用 **pnpm** 作为包管理器。
 
@@ -45,22 +108,30 @@ pnpm format:check     # 检查代码格式
 
 ```
 app/                         # Nuxt app 目录（前端）
-  ├── app.vue               # 根组件
+  ├── api/                   # 前端 API 请求封装
+  │   └── posts.api.ts      # 文章相关 API
   ├── assets/
   │   └── styles/
   │       └── main.scss     # 主样式入口
   ├── components/           # Vue 组件
   │   ├── global/           # 全局组件（自动导入）
   │   │   └── AppFloatingBar.vue
-  │   └── NavList.vue       # 局部组件
+  │   ├── NavList.vue       # 局部组件
+  │   └── MarkDownEditor.client.vue  # 富文本编辑器
   ├── composables/          # 组合式函数（自动导入）
-  │   └── useTheme.ts       # 主题切换
+  │   ├── useTheme.ts       # 主题切换
+  │   ├── useApi.ts         # 请求封装
+  │   ├── useDragAndDrop.ts # 拖拽上传
+  │   └── useMarkdownIO.ts  # Markdown 导入/导出
   ├── layouts/              # 布局组件
-  │   └── default.vue       # 默认布局
-  └── pages/                # 文件路由
-      ├── index.vue         # 首页
-      └── category/
-          └── [PagePath].vue # 动态分类页面
+  │   ├── default.vue       # 默认布局
+  │   └── admin.vue         # 管理后台布局
+  ├── pages/                # 文件路由
+  │   ├── index.vue         # 首页
+  │   └── admin/
+  │       └── index.vue     # 管理后台首页
+  └── types/                # 类型定义（如需要）
+      └── api.types.ts      # API 相关类型
 
 server/                      # Nitro 服务器（后端）
   ├── api/                  # API 路由（Controller 层）
@@ -71,18 +142,17 @@ server/                      # Nitro 服务器（后端）
   │       ├── [id].put.ts
   │       ├── [id].delete.ts
   │       └── [id]/publish.post.ts
-  ├── services/             # 业务逻辑层
-  │   └── posts.service.ts
+  ├── plugins/              # Nitro 插件
+  │   ├── error-handle.ts   # 全局错误处理
+  │   └── init-db.ts        # 数据库初始化
   ├── schemas/              # Zod 验证 Schema
   │   └── post.schema.ts    # 文章相关验证
-  ├── utils/                # 工具函数
-  │   ├── db.ts             # 数据库单例
-  │   ├── validation.ts     # 验证辅助函数
-  │   ├── handler.ts        # （已废弃）
-  │   └── response.ts       # 统一响应格式
-  ├── plugins/              # Nitro 插件
-  │   └── init-db.ts        # 数据库初始化
-  └── middleware/           # Nitro 中间件
+  ├── services/             # 业务逻辑层
+  │   └── posts.service.ts
+  └── utils/                # 工具函数
+      ├── db.ts             # 数据库单例
+      ├── response.ts       # 统一响应格式
+      └── validation.ts     # 验证辅助函数
 
 public/                      # 静态资源
   └── image/                # 图片资源
@@ -139,19 +209,35 @@ data/                        # 数据文件
 | DELETE | `/api/posts/:id` | `server/api/posts/[id].delete.ts` | 删除文章 |
 | POST | `/api/posts/:id/publish` | `server/api/posts/[id]/publish.post.ts` | 发布文章 |
 
-### 统一响应格式
+---
 
-**成功响应**：
+## 后端：统一响应格式
+
+### 成功响应
+
 ```typescript
 {
   success: true,
   code: 200,
   message: "操作成功",
-  data: { ... }
+  data: { ... }  // 响应数据
 }
 ```
 
-**错误快捷方法**（`server/utils/response.ts`）：
+### 失败响应
+
+```typescript
+{
+  success: false,
+  code: 404,      // HTTP 状态码
+  message: "文章不存在",
+  path: "/api/posts/1",
+  stack: "..."    // 仅开发环境
+}
+```
+
+### 错误快捷方法（`server/utils/response.ts`）
+
 ```typescript
 errors.badRequest()     // 400 - 请求参数错误
 errors.notFound()       // 404 - 资源不存在
@@ -164,68 +250,108 @@ errors.internal()       // 500 - 服务器错误
 
 项目通过拦截 `h3App.options.onError` 实现了统一错误响应格式。
 
-**错误响应格式**：
-```json
-{
-  "success": false,
-  "code": 404,
-  "message": "文章不存在",
-  "path": "/api/posts/1",
-  "stack": "..."  // 仅开发环境
-}
-```
-
-**实现代码**：
-```typescript
-export default defineNitroPlugin((nitroApp) => {
-  nitroApp.h3App.options.onError = (error, event) => {
-    // 防止重复发送响应
-    if (event.node.res.headersSent) {
-      return
-    }
-
-    const statusCode = error.statusCode || 500
-    const message = error.message || 'Internal Server Error'
-
-    const response = {
-      success: false,
-      code: statusCode,
-      message,
-      path: event.path,
-      // 开发环境返回堆栈，生产环境隐藏
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-    }
-
-    event.node.res.setHeader('Content-Type', 'application/json')
-    event.node.res.end(JSON.stringify(response))
-  }
-})
-```
-
 **为什么用 `h3App.options.onError` 而不是 `hooks.hook('error')`**：
 - `hooks.hook('error')` - 观察/监听模式，用于日志、上报等副作用
 - `h3App.options.onError` - 处理器模式，用于完全接管错误响应
 
-### 请求验证（使用 Zod）
+---
+
+## 前端：API 请求封装
+
+### 核心函数（`app/composables/useApi.ts`）
+
+```typescript
+const { request } = useApi()
+
+// GET 请求
+const posts = await request<Post[]>('/api/posts', {
+  params: { status: 'published', page: 1 }
+})
+
+// POST 请求
+const newPost = await request<Post>('/api/posts', {
+  method: 'POST',
+  body: { title: '标题', content: '内容' },
+  showToast: true,
+})
+
+// 错误处理
+try {
+  await request('/api/posts', { showToast: true })
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.log(error.code, error.message)
+  }
+}
+```
+
+### 类型定义（`app/api/api.types.ts`）
+
+```typescript
+// 统一响应格式
+export interface ApiResponse<T = any> {
+  success: boolean
+  code: number
+  message: string
+  data?: T
+  path?: string
+  stack?: string
+}
+
+// 错误类
+export class ApiError extends Error {
+  constructor(
+    public code: number,
+    message: string,
+    public data?: any
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+// 请求配置
+export interface ApiRequestConfig {
+  method?: HttpMethod
+  headers?: Record<string, string>
+  params?: Record<string, any>
+  body?: any
+  timeout?: number
+  showToast?: boolean
+}
+```
+
+### 请求处理流程
+
+```
+请求发送 → fetch → response.ok 检查 → 解析 JSON → success 检查 → 返回 data
+                                     ↓                  ↓
+                                  HTTP 错误          业务失败
+                                     ↓                  ↓
+                               抛出 ApiError      抛出 ApiError
+```
+
+---
+
+## 请求验证（使用 Zod）
 
 项目使用 **Zod + H3 内置工具** 进行参数验证，提供运行时验证和类型安全。
 
-#### 已实现的验证辅助函数（`server/utils/validation.ts`）
+### 验证辅助函数（`server/utils/validation.ts`）
 
 ```typescript
-// 三种验证方式，两种错误处理模式
-validateBody(event, schema)      // safeParse + 自定义错误消息
-validateQuery(event, schema)     // safeParse + 自定义错误消息
-validateParams(event, schema)    // safeParse + 自定义错误消息
+// 推荐使用：返回友好错误消息
+validateBody(event, schema)
+validateQuery(event, schema)
+validateParams(event, schema)
 
-validateBodyOrThrow(event, schema)      // parse + Zod 默认异常
-validateQueryOrThrow(event, schema)     // parse + Zod 默认异常
-validateParamsOrThrow(event, schema)    // parse + Zod 默认异常
+// 或使用：抛出 Zod 默认异常
+validateBodyOrThrow(event, schema)
+validateQueryOrThrow(event, schema)
+validateParamsOrThrow(event, schema)
 ```
 
-**推荐使用**：`validateBody/Query/Params` - 返回友好的中文错误消息。
-
-#### 使用示例
+### 使用示例
 
 ```typescript
 import { validateBody, validateQuery, validateParams } from '@server/utils/validation'
@@ -242,77 +368,9 @@ export default defineEventHandler(async (event) => {
   const query = await validateQuery(event, getListQuerySchema)
   // query 类型: GetListQuery，已通过验证
 })
-
-// 验证路径参数
-export default defineEventHandler(async (event) => {
-  const { id } = await validateParams(event, postParamsSchema)
-  // id 类型: number，已通过验证
-})
 ```
 
-#### Schema 定义示例（`server/schemas/post.schema.ts`）
-
-```typescript
-import { z } from 'zod'
-
-// 文章状态枚举（带错误消息）
-export const postStatusEnum = z.enum(['draft', 'published'], {
-  message: '状态必须是 draft 或 published',
-})
-
-// 创建文章 Schema
-export const createPostSchema = z.object({
-  title: z.string()
-    .min(1, { message: '标题不能为空' })
-    .max(200, { message: '标题不能超过 200 字符' })
-    .trim(),
-
-  content: z.string()
-    .min(1, { message: '内容不能为空' })
-    .trim(),
-
-  summary: z.string().trim().optional(),
-  status: postStatusEnum.default('draft'),
-  category: z.string().trim().optional(),
-  tags: z.array(z.string()).optional(),
-  cover_image: z.string().url('封面图必须是有效的 URL').optional().or(z.literal('')),
-})
-
-// 自动推导类型
-export type CreatePostInput = z.infer<typeof createPostSchema>
-
-// 更新文章 Schema（所有字段可选）
-export const updatePostSchema = createPostSchema.partial()
-export type UpdatePostInput = z.infer<typeof updatePostSchema>
-
-// 查询参数 Schema
-export const getListQuerySchema = z.object({
-  status: postStatusEnum.optional(),
-  category: z.string().trim().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
-})
-
-// 路径参数 Schema（带类型转换）
-export const postParamsSchema = z.object({
-  id: z.string()
-    .regex(/^\d+$/, 'ID 必须是数字')
-    .transform((val) => Number(val))  // string → number
-    .refine((val) => val > 0, 'ID 必须大于 0'),
-})
-```
-
-#### 验证流程
-
-```
-请求 → validateBody() → Zod safeParse → 失败？
-                                    ↓ 是
-                           formatZodError() 格式化错误
-                                    ↓
-                           errors.badRequest() 抛出 400
-                                    ↓
-                           error-handle.ts 统一响应格式
-```
+---
 
 ## 前端功能
 
@@ -322,16 +380,23 @@ export const postParamsSchema = z.object({
 |------|------|------|
 | `AppFloatingBar` | `app/components/global/` | 全局浮动栏 |
 | `NavList` | `app/components/` | 导航列表 |
+| `MarkDownEditor` | `app/components/` | 富文本编辑器（支持 Markdown） |
 
 ### Composables
 
 | 函数 | 位置 | 功能 |
 |------|------|------|
 | `useTheme` | `app/composables/useTheme.ts` | 主题切换（dark/light） |
+| `useApi` | `app/composables/useApi.ts` | API 请求封装 |
+| `useDragAndDrop` | `app/composables/useDragAndDrop.ts` | 拖拽文件上传 |
+| `useMarkdownIO` | `app/composables/useMarkdownIO.ts` | Markdown 导入/导出 |
 
 ### 布局
 
 - `default.vue` - 默认布局，包含导航栏和主题切换
+- `admin.vue` - 管理后台布局
+
+---
 
 ## Nitro 服务器说明
 
@@ -354,11 +419,15 @@ export const postParamsSchema = z.object({
 - **插件**：`server/plugins/` 中的插件在服务器启动时自动运行
 - **中间件**：`server/middleware/` 在所有路由处理器之前运行
 
+---
+
 ## 环境变量
 
 - `.env` 文件放在项目根目录
 - `DATABASE_PATH` - 数据库文件路径（默认 `./data/blog.db`）
 - Nuxt 4 内置支持 `process.env`
+
+---
 
 ## 已安装依赖
 
@@ -368,8 +437,10 @@ export const postParamsSchema = z.object({
 |------|------|------|
 | `better-sqlite3` | 12.5.0 | 嵌入式 SQLite 数据库 |
 | `zod` | 4.3.6 | Schema 验证与类型推导 |
-| `@nuxt/content` | ^2.14.0 | Markdown 内容管理 |
-| `@nuxt/icon` | ^1.10.3 | 图标系统 |
+| `@nuxt/content` | ^3.11.0 | Markdown 内容管理 |
+| `@nuxt/icon` | ^2.2.1 | 图标系统 |
+| `@tiptap/vue-3` | ^3.19.0 | 富文本编辑器 |
+| `tiptap-markdown` | ^0.9.0 | Markdown 支持 |
 
 ### 类型包
 
@@ -383,6 +454,8 @@ export const postParamsSchema = z.object({
 |------|------|------|
 | `sass` | ^1.97.3 | Sass 样式预处理器 |
 | `eslint-config-prettier` | ^10.1.8 | ESLint 与 Prettier 兼容配置 |
+
+---
 
 ## 开发规范
 
@@ -402,10 +475,9 @@ export const postParamsSchema = z.object({
 
 ### 导入顺序
 
-1. Node 内置模块
-2. 外部依赖
-3. 内部模块（相对路径）
-4. 类型导入（如有）
+1. 第三方库（从 `node_modules`）
+2. 相对路径的本地模块
+3. 类型定义（使用 `import type`）
 
 ---
 
@@ -413,4 +485,5 @@ export const postParamsSchema = z.object({
 - **双层内容架构**：项目巧妙结合了数据库和 Markdown 文件，数据库适合需要管理的动态内容，Markdown 适合纯展示的静态页面
 - **简化的两层设计**：对于小型项目，Service 层直接处理数据库操作避免了过度抽象，保持了代码简洁
 - **Zod 验证优势**：Schema 定义即类型定义，一次编写同时获得运行时验证和 TypeScript 类型推导，消除了类型和验证规则不一致的问题
+- **Nuxt 4 自动导入**：充分利用 Nuxt 的自动导入机制，减少样板代码，提升开发体验
 `─────────────────────────────────────────────────`
