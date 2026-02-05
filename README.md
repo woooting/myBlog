@@ -1,75 +1,184 @@
-# Nuxt Content Starter
+<div align="center">
 
-Look at the [Nuxt Content documentation](https://content.nuxt.com) to learn more.
+# 🚀 MyBlog - 基于 Nuxt 4 的个人博客系统
 
-## Setup
+**现代化全栈博客解决方案，融合 SQLite 数据库与 Markdown 静态内容的双层内容管理架构**
 
-Make sure to install dependencies:
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.3.0-00DC82?logo=nuxt.js)](https://nuxt.com)
+[![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?logo=vue.js)](https://vuejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org)
+
+</div>
+
+---
+
+## ✨ 特性
+
+### 🎯 技术亮点
+
+- **🔥 Nuxt 4** - 基于 Vue 3 的全栈框架，支持 SSR/SSG/SPA
+- **💾 双层内容架构** - SQLite 存储动态内容 + @nuxt/content 管理 Markdown 静态页面
+- **🛡️ 类型安全** - 使用 Zod 进行运行时验证与类型推导
+- **🎨 富文本编辑** - 集成 TipTap 编辑器，支持 Markdown 语法
+- **🌙 主题切换** - 内置深色/浅色主题切换
+- **📱 响应式设计** - 完美适配移动端与桌面端
+
+### 🏗️ 架构设计
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Nuxt 4 App                       │
+├─────────────────────────────────────────────────────┤
+│  Frontend (Vue 3)    │    Backend (Nitro/H3)        │
+│  - Components        │    - API Routes              │
+│  - Pages             │    - Services                │
+│  - Composables       │    - Validation (Zod)        │
+│  - Layouts           │    - Database (SQLite)       │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 技术栈
+
+| 类别 | 技术 | 用途 |
+|------|------|------|
+| **框架** | Nuxt 4 | 全栈框架 |
+| **前端** | Vue 3 + TypeScript | UI 与类型安全 |
+| **后端** | Nitro + H3 | 服务端框架 |
+| **数据库** | better-sqlite3 | 嵌入式数据库 |
+| **验证** | Zod | Schema 验证 |
+| **样式** | Sass | CSS 预处理 |
+| **图标** | @nuxt/icon | 图标系统 |
+| **编辑器** | TipTap | 富文本编辑 |
+| **包管理** | pnpm | 依赖管理 |
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js >= 18
+- pnpm >= 8
+
+### 安装依赖
 
 ```bash
-# npm
-npm install
+# 克隆项目
+git clone https://github.com/your-username/myblog.git
+cd myblog
 
-# pnpm
+# 安装依赖
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+### 开发模式
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
+# 启动开发服务器
 pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+访问 [http://localhost:3000](http://localhost:3000)
 
-Build the application for production:
+### 生产构建
 
 ```bash
-# npm
-npm run build
-
-# pnpm
+# 构建
 pnpm build
 
-# yarn
-yarn build
-
-# bun
-bun run build
+# 预览
+pnpm preview
 ```
 
-Locally preview production build:
+---
+
+## 📁 项目结构
+
+```
+myBlog/
+├── app/                          # Nuxt app 目录（前端）
+│   ├── api/                      # API 请求封装
+│   ├── assets/styles/            # 样式文件
+│   ├── components/               # Vue 组件
+│   ├── composables/              # 组合式函数（自动导入）
+│   ├── layouts/                  # 布局组件
+│   └── pages/                    # 文件路由
+│
+├── server/                       # Nitro 服务器（后端）
+│   ├── api/                      # API 路由
+│   ├── plugins/                  # Nitro 插件
+│   ├── schemas/                  # Zod 验证 Schema
+│   ├── services/                 # 业务逻辑层
+│   └── utils/                    # 工具函数
+│
+├── public/                       # 静态资源
+├── data/blog.db                  # SQLite 数据库
+├── nuxt.config.ts               # Nuxt 配置
+└── CLAUDE.md                    # 项目开发指南
+```
+
+---
+
+## 🔌 API 接口
+
+### 文章管理
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/posts` | 获取文章列表 |
+| POST | `/api/posts` | 创建文章 |
+| GET | `/api/posts/:id` | 获取单篇文章 |
+| PUT | `/api/posts/:id` | 更新文章 |
+| DELETE | `/api/posts/:id` | 删除文章 |
+| POST | `/api/posts/:id/publish` | 发布/撤回文章 |
+
+---
+
+## 🛠️ 开发命令
 
 ```bash
-# npm
-npm run preview
+# 开发
+pnpm dev              # 启动开发服务器
 
-# pnpm
-pnpm preview
+# 构建
+pnpm build            # 生产构建
+pnpm preview          # 本地预览
 
-# yarn
-yarn preview
-
-# bun
-bun run preview
+# 代码质量
+pnpm lint             # ESLint 检查
+pnpm lint:fix         # ESLint 自动修复
+pnpm format           # Prettier 格式化
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
+
+## 📝 开发规范
+
+⚠️ **重要**：在 `app/` 目录下，永远不要从 `vue` 中导入任何类型、Hook 或 API
+
+```typescript
+// ❌ 禁止
+import { ref, computed } from 'vue'
+
+// ✅ 正确（自动导入）
+const count = ref(0)
+const doubled = computed(() => count.value * 2)
+```
+
+---
+
+## 📄 许可证
+
+MIT License
+
+---
+
+<div align="center">
+
+**如果这个项目对你有帮助，请给一个 ⭐️**
+
+Made with ❤️ by [Your Name](https://github.com/your-username)
+
+</div>
