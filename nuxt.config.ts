@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
-  modules: ['@nuxt/content', '@nuxt/icon', '@nuxt/ui'],
+  modules: ['@nuxt/content', '@nuxt/icon', '@nuxt/ui', '@vueuse/nuxt'],
   devtools: { enabled: true },
   compatibilityDate: '2024-04-03',
   css: ['~/assets/styles/main.scss'],
@@ -16,10 +16,35 @@ export default defineNuxtConfig({
     fonts: false,
   },
   // Vite 配置
+  ssr: {
+    // 跳过这些纯客户端包的 SSR 处理
+    noExternal: [
+      '@tiptap/vue-3',
+      '@tiptap/starter-kit',
+      '@tiptap/extension-placeholder',
+      '@tiptap/extension-link',
+      '@tiptap/extension-image',
+      '@tiptap/extension-code-block-lowlight',
+      '@tiptap/pm',
+      'lowlight',
+      'tiptap-markdown',
+    ],
+  },
   vite: {
     optimizeDeps: {
       // 禁用自动依赖扫描（由 @nuxt/content 等模块手动配置 include）
       noDiscovery: true,
+      // 明确包含 TipTap 相关包用于客户端预构建
+      include: [
+        '@tiptap/vue-3',
+        '@tiptap/starter-kit',
+        '@tiptap/extension-placeholder',
+        '@tiptap/extension-link',
+        '@tiptap/extension-image',
+        '@tiptap/extension-code-block-lowlight',
+        'lowlight',
+        'tiptap-markdown',
+      ],
     },
   },
 
