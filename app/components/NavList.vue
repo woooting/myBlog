@@ -7,23 +7,16 @@
   </div>
 </template>
 <script setup lang="ts">
-const navList = [
-  {
-    name: 'Home',
-    path: '/',
-    iconname: 'lucide:home',
-  },
-  {
-    name: 'code Article',
-    path: '/category/codearticle',
-    iconname: 'lucide:code-xml',
-  },
-  {
-    name: 'Life Insights',
-    path: '/category/lifeinsights',
-    iconname: 'lucide:lightbulb',
-  },
-]
+// TODO(human): 可以扩展此接口，如添加 disabled、badge 等属性
+export interface NavItem {
+  name: string
+  path: string
+  iconname: string
+}
+
+defineProps<{
+  navList: NavItem[]
+}>()
 </script>
 <style lang="scss">
 .navlist {
