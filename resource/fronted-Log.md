@@ -1567,145 +1567,854 @@ const MarkDownEditor = defineAsyncComponent(() =>
 
 ---
 
-## 2025-02-04 - TipTap 草稿恢复 HTML 标签显示问题（未解决）
+## 2025-02-07 - TypeScript 项目路径别名配置：双重配置原则
 
-### 一、问题描述
+### 一、问题背景
 
-TipTap 编辑器使用 `getHTML()` 获取内容并保存到 localStorage，恢复时 HTML 标签被当作纯文本显示，而不是被正确解析。
+在 Nuxt 4 + TypeScript 项目中配置路径别名 `@app` 时，发现仅在 `tsconfig.json` 中配置后，运行时仍然报错找不到模块。
 
-#### 问题表现
+#### 错误信息
 
-用户输入 "123"：
-1. TipTap 存储为 `<p>123</p>`（HTML 格式）
-2. localStorage 存储字符串：`"<p>123</p>"`
-3. 恢复草稿时，编辑器显示 `<p>123</p>`（原始文本）
-4. 预期：应该显示 "123"（渲染后的内容）
+```
+Cannot find package '@app/api/posts.api' imported from 'D:/gitProject/nuxt-4/myBlog/app/pages/index.vue'
+```
+
+---
+
+### 二、核心原理：双重配置的必要性
+
+#### 两个配置文件的不同职责
+
+| 配置文件 | 作用范围 | 生效时机 | 职责 |
+|---------|---------|----------|------|
+| **tsconfig.json** | TypeScript 编译器 | 编译时/IDE 智能提示 | 类型检查、路径映射、跳转定义 |
+| **框架配置 (nuxt.config.ts)** | 运行时模块解析 | 运行时/构建时 | 实际文件加载、Vite/Webpack 解析 |
+
+#### 一句话总结
+
+```
+tsconfig.json     → 告诉编辑器"这个路径指向哪里"
+框架配置 (nuxt.config.ts)  → 告诉运行时"这个路径指向哪里"
+```
+
+---
+
+### 三、配置示例
+
+#### Nuxt 4 项目
+
+**1. tsconfig.json（项目根目录）**
+
+```json
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@app/*": ["./app/*"],
+      "@server/*": ["./server/*"]
+    }
+  }
+}
+```
+
+**2. nuxt.config.ts**
+
+```typescript
+import { fileURLToPath } from 'node:url'
+
+export default defineNuxtConfig({
+  // 前端路径别名（app 目录）
+  alias: {
+    '@app': fileURLToPath(new URL('./app', import.meta.url)),
+  },
+  // Nitro 服务器配置
+  nitro: {
+    // Server 端路径别名
+    alias: {
+      '@server': fileURLToPath(new URL('./server', import.meta.url)),
+    },
+  },
+})
+```
+
+---
+
+### 四、配置缺失的后果
+
+#### 只配置 tsconfig.json
+
+| 场景 | 结果 |
+|------|------|
+| IDE 智能提示 | ✅ 正常工作 |
+| 类型检查 | ✅ 正常工作 |
+| 跳转定义 | ✅ 正常工作 |
+| **运行时加载** | ❌ **报错找不到模块** |
+
+#### 只配置框架 config
+
+| 场景 | 结果 |
+|------|------|
+| IDE 智能提示 | ❌ 无法识别 |
+| 类型检查 | ❌ 报错 |
+| 跳转定义 | ❌ 无法跳转 |
+| **运行时加载** | ✅ 正常工作 |
+
+---
+
+### 五、为什么需要两份配置？
+
+#### TypeScript 编译器的独立性
+
+```
+TypeScript 编译器（tsc）
+    ↓
+只读取 tsconfig.json
+    ↓
+不关心你用什么框架（Nuxt/Vite/Webpack）
+    ↓
+只负责类型检查和编译
+```
+
+#### 框架构建工具的独立性
+
+```
+Vite/Webpack（构建工具）
+    ↓
+只读取框架配置文件
+    ↓
+不关心 tsconfig.json（除非特殊配置）
+    ↓
+只负责模块解析和打包
+```
+
+#### 两者的关系
+
+```
+开发流程：
+┌─────────────────┐
+│  编写代码        │
+│  import '@app/  │
+│       api'      │
+└────────┬────────┘
+         ↓
+    ┌──────────────────────────┐
+    │                          │
+    ↓                          ↓
+┌─────────────┐          ┌─────────────┐
+│ TypeScript  │          │   Vite      │
+│ 编译器       │          │   构建      │
+│             │          │             │
+│ tsconfig    │          │ nuxt.config │
+│ paths 配置   │          │ alias 配置   │
+└─────────────┘          └─────────────┘
+    ↓                          ↓
+类型检查通过               运行时正常加载
+```
+
+---
+
+### 六、其他框架的配置方式
+
+#### Vite 项目
+
+**tsconfig.json**：
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+
+**vite.config.ts**：
+```typescript
+import { fileURLToPath } from 'node:url'
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
+})
+```
+
+#### Webpack 项目
+
+**tsconfig.json**：
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@src/*": ["./src/*"]
+    }
+  }
+}
+```
+
+**webpack.config.js**：
+```javascript
+const path = require('path')
+
+module.exports = {
+  resolve: {
+    alias: {
+      '@src': path.resolve(__dirname, 'src')
+    }
+  }
+}
+```
+
+---
+
+### 七、核心学习点
+
+1. **tsconfig.json ≠ 运行时配置**：它只影响 TypeScript 编译器和 IDE，不影响实际模块加载
+2. **框架配置是必需的**：无论是否使用 TypeScript，都需要在框架配置中设置路径别名
+3. **fileURLToPath 的作用**：将 `file://` 协议的 URL 转换为操作系统的绝对路径，确保跨平台兼容性
+4. **路径一致性原则**：tsconfig 和框架配置中的路径必须保持一致，否则会出现"开发时正常、运行时报错"的情况
+
+---
+
+### 八、调试清单
+
+当路径别名不工作时，按以下顺序检查：
+
+| 检查项 | 命令/方式 | 预期结果 |
+|--------|----------|----------|
+| **1. tsconfig 配置** | 查看 `compilerOptions.paths` | ✅ 路径映射存在 |
+| **2. 框架配置** | 查看 `nuxt.config.ts` 或 `vite.config.ts` | ✅ alias 配置存在 |
+| **3. 路径一致性** | 对比两份配置的路径 | ✅ 完全一致 |
+| **4. 重启服务器** | 修改配置后重启 | ✅ 配置生效 |
+| **5. IDE 缓存** | 重新加载 TS 服务器 | ✅ 智能提示正常 |
+
+---
+
+`★ Insight ─────────────────────────────────────`
+- **配置分离原则**：TypeScript 配置服务于类型系统，框架配置服务于运行时，两者职责分离但需要保持一致
+- **fileURLToPath 的必要性**：直接使用字符串路径（如 `'./app'`）在不同操作系统下可能出问题，使用 `fileURLToPath` 确保跨平台兼容
+- **IDE vs 运行时**：IDE 只看 tsconfig，运行时只看框架配置，两边都要配置才能实现完整的开发体验
+`─────────────────────────────────────────────────`
+
+---
+
+**Created**: 2025-02-07
+**Status**: ✅ 记录完成
+
+---
+
+## 2025-02-07 - TipTap 编辑器刷新后空白：父子组件 Loading 方案
+
+### 一、问题背景
+
+TipTap 富文本编辑器页面刷新后，编辑器组件消失，页面显示空白区域。即使添加 loading 占位符，也无法在正确的时机显示。
+
+#### 错误现象
+
+- 刷新页面后看到空白区域
+- 在弱网测试下（3G），loading 始终不显示
+- 编辑器创建完成后 loading 才出现，但立即消失
 
 ---
 
 ### 二、问题分析
 
-#### 当前实现
+#### 尝试方案 1：子组件内部 Loading（失败）
 
-```typescript
-// 获取内容
-getValue: () => editor.value?.getHTML() || '',
+**实现代码**：
+```vue
+<!-- MarkDownEditor.client.vue -->
+<template>
+  <div v-if="!editor" class="editor-loading">
+    <div class="loading-spinner"></div>
+    <p>编辑器加载中...</p>
+  </div>
+</template>
 
-// 设置内容
-setValue: (value) => {
-  editor.value?.commands.setContent(value)
-},
+<script setup>
+const isEditorReady = ref(false)
+
+const editor = useEditor({
+  onCreate: () => {
+    isEditorReady.value = true
+  }
+})
+</script>
 ```
 
-#### 可能的原因
+**失败原因**：
+1. `useEditor` 返回的 `editor` ref 在组件首次渲染时可能还没有正确的响应式追踪
+2. `v-if="!editor"` 条件判断的时机不可靠
+3. `isEditorReady` 虽然能工作，但 loading 在编辑器初始化完成后才消失，时序不对
 
-1. **TipTap Markdown 扩展干扰**
-   - Markdown 扩展配置了 `html: false`
-   - 可能导致 HTML 内容被当作纯文本处理
-
-2. **`setContent` 解析问题**
-   - `commands.setContent()` 可能需要特定选项才能正确解析 HTML
-   - 或需要使用命令链：`chain().focus().setContent().run()`
-
-3. **存储格式问题**
-   - JSON.stringify 可能对 HTML 字符串进行额外转义
-   - 导致恢复时无法正确解析
-
----
-
-### 三、已尝试的方案
-
-#### 方案 A：使用命令链设置内容
+#### 尝试方案 2：人为延迟显示（失败）
 
 ```typescript
-setValue: (value) => {
-  editor.value?.chain().focus().setContent(value).run()
-},
-```
+const showLoading = ref(true)
 
-**结果**：TypeScript 类型错误，已回滚
-
-#### 方案 B：恢复后验证空内容
-
-```typescript
-const restoreDraft = () => {
-  autoSave.restoreDraft()
-  showRestoreDraft.value = false
-
-  nextTick(() => {
-    if (editor.value?.isEmpty) {
-      autoSave.clearDraft()
-      editor.value?.commands.clearContent()
+watch(
+  () => editor.value,
+  (ed) => {
+    if (ed && !editorReadyTime.value) {
+      editorReadyTime.value = Date.now()
+      setTimeout(() => {
+        showLoading.value = false
+      }, 800)
     }
-  })
+  }
+)
+```
+
+**失败原因**：人为延迟治标不治本，且在快速网络下用户体验差。
+
+---
+
+### 三、最终方案：父子组件通信
+
+#### 核心思路
+
+利用父子组件的挂载时序差异：
+- 父组件先挂载 → 立即显示 loading
+- 子组件后挂载 → 初始化编辑器（需要时间）
+- 编辑器就绪 → 子组件通知父组件
+- 父组件隐藏 loading
+
+#### 执行流程
+
+```
+页面刷新
+    ↓
+父组件 setup → isLoadingEditor = true → 显示 loading ✅
+    ↓
+父组件渲染，子组件开始挂载（v-show 确保子组件渲染）
+    ↓
+子组件 mounted（编辑器还在初始化中）→ loading 仍然显示 ✅
+    ↓
+[编辑器初始化中... 弱网时可能需要几秒] → loading 覆盖空白期 ✅
+    ↓
+编辑器 onCreate → emit('ready') → 父组件收到
+    ↓
+父组件 → isLoadingEditor = false → 隐藏 loading，显示编辑器 ✅
+```
+
+---
+
+### 四、实现代码
+
+#### 父组件 `editor.vue`
+
+```vue
+<template>
+  <div style="min-height: 500px;">
+    <!-- Loading 占位 -->
+    <div v-show="isLoadingEditor" class="editor-loading-wrapper">
+      <div class="loading-spinner"></div>
+      <p>编辑器加载中...</p>
+    </div>
+
+    <!-- 编辑器组件 -->
+    <MarkDownEditor v-show="!isLoadingEditor" v-model="form.content" @ready="onEditorReady" />
+  </div>
+</template>
+
+<script setup lang="ts">
+const form = ref({
+  title: '',
+  content: '',
+})
+
+// 编辑器 loading 状态
+const isLoadingEditor = ref(true)
+
+// 编辑器准备就绪
+const onEditorReady = () => {
+  isLoadingEditor.value = false
 }
+
+definePageMeta({
+  layout: 'admin',
+})
+</script>
+
+<style lang="scss" scoped>
+.editor-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  gap: 1rem;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color, #e0e0e0);
+    border-top-color: var(--primary-color, #1890ff);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary, #666);
+    margin: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
 ```
 
-**结果**：能解决空 `<p></p>` 问题，但无法解决 HTML 标签显示问题
+#### 子组件 `MarkDownEditor.client.vue`
+
+```vue
+<script setup lang="ts">
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  'ready': []  // 新增 ready 事件
+}>()
+
+const editor = useEditor({
+  content: '',
+  extensions: [...],
+  onCreate: ({ editor: ed }) => {
+    // 通知父组件编辑器已就绪
+    emit('ready')  // 关键：编辑器创建完成后通知父组件
+
+    // 设置初始内容
+    const initialValue = props.modelValue || ''
+    if (initialValue) {
+      ed.commands.setContent(initialValue)
+    }
+
+    checkAndShowDraftOption()
+  },
+})
+</script>
+```
 
 ---
 
-### 四、待尝试的解决方案
+### 五、关键设计点
 
-#### 方案 C：使用 Markdown 格式存储
+#### 1. 使用 `v-show` 而非 `v-if`
 
-不使用 `getHTML()`，改用 Markdown 扩展的 `getMarkdown()`：
+```vue
+<!-- ❌ 错误：v-if 会导致子组件不渲染 -->
+<div v-if="isLoadingEditor" class="loading">...</div>
+<MarkDownEditor v-else v-model="content" @ready="onEditorReady" />
 
-```typescript
-getValue: () => editor.value?.storage.markdown.getMarkdown() || '',
-
-setValue: (value) => {
-  editor.value?.commands.setContent(value, { parseMarkdown: true })
-},
+<!-- ✅ 正确：v-show 让子组件始终渲染 -->
+<div v-show="isLoadingEditor" class="loading">...</div>
+<MarkDownEditor v-show="!isLoadingEditor" v-model="content" @ready="onEditorReady" />
 ```
 
-#### 方案 D：修改 TipTap Markdown 扩展配置
+**原因**：
+- `v-if="false"` 时子组件不存在于 DOM，无法触发 `onCreate`
+- `v-show` 只是视觉隐藏（`display: none`），子组件仍然正常渲染
 
-```typescript
-Markdown.configure({
-  html: true,  // 改为 true，允许 HTML 解析
-  transformPastedText: true,
-  transformCopiedText: true,
-}),
+#### 2. 父子组件挂载时序
+
+| 时机 | 父组件状态 | 子组件状态 | 用户看到 |
+|------|----------|----------|----------|
+| 页面刷新 | setup 执行 | 未开始 | - |
+| 父组件渲染 | `isLoadingEditor = true` | 未挂载 | loading ✅ |
+| 子组件挂载 | 等待事件 | mounted，编辑器初始化中 | loading ✅ |
+| 编辑器就绪 | 等待事件 | onCreate 触发 | loading ✅ |
+| 收到事件 | `isLoadingEditor = false` | 完成 | 编辑器 ✅ |
+
+#### 3. 时序保证
+
 ```
-
-#### 方案 E：使用 TipTap 的 JSON 格式存储
-
-```typescript
-getValue: () => JSON.stringify(editor.value?.getJSON()),
-
-setValue: (value) => {
-  editor.value?.commands.setContent(JSON.parse(value))
-},
+父组件 setup 执行
+    ↓
+isLoadingEditor = ref(true)  ← 立即响应式更新
+    ↓
+模板渲染，v-show="true"      ← loading 立即可见
+    ↓
+子组件渲染、挂载
+    ↓
+编辑器初始化（异步）        ← 用户看到 loading，无空白
+    ↓
+onCreate 触发
+    ↓
+emit('ready')
+    ↓
+父组件 onEditorReady
+    ↓
+isLoadingEditor.value = false ← loading 消失，编辑器显示
 ```
-
----
-
-### 五、相关文件
-
-- `app/composables/useAutoSave.ts` - 自动保存逻辑
-- `app/components/MarkDownEditor.client.vue` - TipTap 编辑器组件
 
 ---
 
 ### 六、核心学习点
 
-1. **TipTap 的内容格式**：
-   - `getHTML()` - 序列化的 HTML 字符串
-   - `getMarkdown()` - Markdown 格式
-   - `getJSON()` - TipTap 内部的 JSON 格式
+1. **`v-if` vs `v-show` 的选择**：
+   - `v-if`：条件渲染，false 时元素不存在于 DOM
+   - `v-show`：条件显示，false 时元素仍在 DOM，只是 `display: none`
+   - 需要子组件触发事件时，必须用 `v-show`
 
-2. **`setContent` 的行为**：
-   - 默认解析 HTML
-   - 受扩展配置影响（如 Markdown 扩展）
-   - 可能需要特定选项
+2. **Vue 3 父子组件挂载顺序**：
+   ```
+   父组件 beforeMount
+   父组件模板渲染，遇到子组件
+   子组件 setup
+   子组件 beforeMount
+   子组件 mounted  ← 先触发
+   父组件 mounted  ← 后触发
+   ```
 
-3. **存储格式选择**：
-   - HTML：易读但可能有解析问题
-   - Markdown：格式稳定但依赖扩展
-   - JSON：最稳定但不直观
+3. **响应式更新的时机**：
+   - `ref(true)` 在 setup 执行时立即响应式更新
+   - 模板中的 `v-show` 会立即反映这个变化
+   - 不需要等待 `onMounted` 或其他生命周期
+
+4. **父子组件通信的优势**：
+   - 职责分离：父组件控制 loading，子组件专注编辑器
+   - 时序清晰：利用组件挂载顺序，loading 覆盖初始化空白期
+   - 易于维护：各自独立，逻辑清晰
+
+5. **TipTap 编辑器初始化时机**：
+   - `useEditor` 同步调用，但编辑器实际初始化是异步的
+   - `onCreate` 回调在编辑器 DOM 完全渲染后触发
+   - 弱网环境下初始化时间可能长达几秒
 
 ---
 
-**Created**: 2025-02-04
-**Status**: ⚠️ 未解决，待明日继续排查
+### 七、其他场景应用
+
+这种父子组件 Loading 方案适用于：
+
+| 场景 | 适用性 |
+|------|--------|
+| 大型图表库（ECharts） | ✅ 适合 |
+| 富文本编辑器（TipTap、Quill） | ✅ 适合 |
+| 地图组件（Leaflet、Mapbox） | ✅ 适合 |
+| 视频播放器 | ✅ 适合 |
+| 轻量组件（按钮、输入框） | ❌ 过度设计 |
+
+---
+
+`★ Insight ─────────────────────────────────────`
+- **组件挂载顺序的利用**：父子组件的挂载时序差异是天然的加载状态管理机制
+- **`v-show` 的必要性**：当子组件需要触发事件时，必须确保其在 DOM 中存在
+- **编辑器初始化的异步性**：`useEditor` 虽然是同步调用，但实际初始化（DOM 绑定、扩展加载）是异步的
+- **Loading 的真正作用**：不是装饰，而是覆盖异步初始化期间的空白，提升用户体验
+`─────────────────────────────────────────────────`
+
+---
+
+**Created**: 2025-02-07
+**Status**: ✅ 问题已解决
+
+---
+
+## 2025-02-10 - TipTap 编辑器 Base64 图片恢复失败：JSON vs HTML 序列化
+
+### 一、问题背景
+
+在 TipTap 富文本编辑器中插入 Base64 图片后，刷新页面并点击"恢复草稿"，图片丢失无法恢复，但文字内容能正常恢复。
+
+#### 错误现象
+
+- 插入 Base64 图片后刷新页面
+- 点击"恢复草稿"按钮
+- 文字内容正常恢复
+- **图片完全消失**
+
+---
+
+### 二、问题排查过程
+
+#### 排查方向 1：localStorage 容量限制（❌ 排除）
+
+**假设**：Base64 图片太大，超出 localStorage 容量
+
+**验证**：
+```
+单张 1MB 图片 → Base64 后 ~1.3MB
+localStorage 限制：5-10MB
+✅ 容量足够，不是存储问题
+```
+
+**结论**：单张小图不会超出限制，容量问题排除
+
+---
+
+#### 排查方向 2：Markdown 扩展过滤图片（❌ 排除）
+
+**假设**：Markdown 扩展在 `setContent()` 时将 HTML 转为 Markdown 再转回 HTML，Base64 data URI 被过滤
+
+**验证**：临时禁用 Markdown 扩展后测试
+
+**结果**：禁用后图片依然无法恢复
+
+**结论**：不是 Markdown 扩展的问题
+
+---
+
+#### 排查方向 3：缺少基础 Image 扩展（❌ 部分正确）
+
+**发现**：编辑器只配置了 `ImageResize`，没有配置基础的 `Image` 扩展
+
+```typescript
+extensions: [
+  // Image,  ← 缺少基础扩展！
+  ImageResize.configure({ inline: true }),
+]
+```
+
+**修复**：添加 `Image` 扩展
+
+```typescript
+extensions: [
+  Image,  // ← 添加基础 Image 扩展
+  ImageResize.configure({ inline: true }),
+]
+```
+
+**结果**：添加后扩展列表显示 `'image'` 和 `'imageResize'` 都已加载，但图片依然无法恢复
+
+**结论**：Image 扩展是必需的，但不是根本原因
+
+---
+
+#### 排查方向 4：HTML 解析器问题（✅ 确认）
+
+**调试日志**：
+```
+1. localStorage 原始数据包含 <img>: true ✓
+2. JSON.parse 后包含 <img>: true ✓
+3. 恢复后编辑器 HTML 包含 <img>: false ✗
+4. JSON 中是否有 image 节点: false ✗
+```
+
+**关键发现**：数据流在 `setContent()` 调用后断裂
+
+```
+localStorage → JSON.parse → 包含图片 ✓
+    ↓
+editor.commands.setContent(html)
+    ↓
+HTML 解析器处理
+    ↓
+编辑器内容 → 图片丢失 ✗
+```
+
+**根因**：TipTap 的 HTML 解析器在处理包含超长 Base64 data URI 的 `<img>` 标签时失败，图片节点被丢弃。
+
+---
+
+### 三、最终解决方案
+
+#### 核心思路
+
+不使用 HTML 格式存储，改用 TipTap 的**原生 JSON 格式**：
+
+| 方案 | 存储格式 | 恢复方式 | 问题 |
+|------|----------|----------|------|
+| ❌ 之前 | `getHTML()` 返回 HTML 字符串 | `setContent(html)` 需要 HTML 解析 | Base64 图片解析失败 |
+| ✅ 现在 | `getJSON()` 返回 JSON 对象 | `setContent(json)` 直接使用 | 图片完整保留 |
+
+#### 实现代码
+
+**修改 `useAutoSave` 的 `getValue` 和 `setValue`**：
+
+```typescript
+// ❌ 之前：使用 HTML 格式
+const autoSave = useAutoSave<string>({
+  getValue: () => editor.value?.getHTML() || '',
+  setValue: (value) => {
+    editor.value?.commands.setContent(value)
+  },
+})
+
+// ✅ 现在：使用 JSON 格式
+const autoSave = useAutoSave<any>({
+  getValue: () => {
+    if (!editor.value) return ''
+    return editor.value.getJSON()  // ← TipTap 原生格式
+  },
+  setValue: (value) => {
+    if (!editor.value || !value) return
+    editor.value.commands.setContent(value, false)  // ← 直接使用 JSON
+  },
+})
+```
+
+#### JSON 格式示例
+
+**存储的数据结构**：
+```json
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "文字内容"
+        },
+        {
+          "type": "image",
+          "attrs": {
+            "src": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCE...",
+            "alt": "图片描述",
+            "width": 800,
+            "height": 600
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 四、为什么 JSON 格式能解决问题？
+
+#### 1. 避免 HTML 解析
+
+```
+HTML 格式路径：
+getHTML() → 生成 HTML 字符串 → localStorage
+    ↓
+恢复时：localStorage → HTML 字符串 → HTML 解析器 → TipTap 节点
+    ↓
+问题：HTML 解析器无法正确处理超长 Base64 data URI
+
+JSON 格式路径：
+getJSON() → 生成 JSON 对象 → localStorage
+    ↓
+恢复时：localStorage → JSON 对象 → TipTap 节点
+    ↓
+解决：直接使用 TipTap 原生格式，无需解析
+```
+
+#### 2. 数据完整性
+
+| 格式 | Base64 图片处理 |
+|------|-----------------|
+| **HTML** | 字符串形式，依赖 HTML 解析器 |
+| **JSON** | 对象属性形式，直接读取 `attrs.src` |
+
+---
+
+### 五、完整代码修改
+
+#### `app/components/MarkDownEditor.client.vue`
+
+```typescript
+// 自动保存功能 - 使用 JSON 格式
+const autoSave = useAutoSave<any>({
+  storageKey: props.storageKey || 'markdown-editor-draft',
+  getValue: () => {
+    if (!editor.value) return ''
+    return editor.value.getJSON()
+  },
+  setValue: (value) => {
+    if (!editor.value || !value) return
+    editor.value.commands.setContent(value, false)
+  },
+  delay: 1000,
+  isEmpty: (json) => {
+    if (!json || typeof json !== 'object') return true
+    if (json.type === 'doc' && (!json.content || json.content.length === 0)) return true
+    if (json.type === 'doc' && json.content.length === 1) {
+      const first = json.content[0]
+      if (first.type === 'paragraph' && (!first.content || first.content.length === 0)) return true
+    }
+    return false
+  },
+})
+
+// 检查草稿
+const checkAndShowDraftOption = () => {
+  if (props.modelValue) return
+  if (editor.value && !editor.value.isEmpty) return
+
+  const draft = autoSave.getDraft()
+  if (draft && typeof draft === 'object' && draft.type === 'doc') {
+    showRestoreDraft.value = true
+  }
+}
+
+// 页面卸载时保存
+onBeforeUnmount(() => {
+  if (editor.value) {
+    const json = editor.value.getJSON()
+    const key = props.storageKey || 'markdown-editor-draft'
+    localStorage.setItem(key, JSON.stringify(json))
+  }
+  editor.value?.destroy()
+})
+```
+
+---
+
+### 六、核心学习点
+
+1. **`getHTML()` vs `getJSON()` 的本质区别**：
+   - `getHTML()`：序列化为 HTML 字符串，需要解析器反序列化
+   - `getJSON()`：返回 TipTap 的原生文档结构，可直接使用
+
+2. **序列化不对称性**：
+   - 某些数据的序列化和反序列化不是完美的逆运算
+   - Base64 data URI 在 HTML 解析过程中可能被修改或丢弃
+
+3. **编辑器原生格式的优势**：
+   - 完整保留所有节点属性
+   - 避免第三方解析器的限制
+   - 性能更好（无需字符串解析）
+
+4. **存储格式选择原则**：
+   - 需要跨编辑器兼容 → HTML
+   - 需要完整数据保留 → JSON
+   - 需要人类可读 → HTML
+   - 需要最小体积 → JSON
+
+---
+
+### 七、其他相关发现
+
+#### 必需的扩展配置
+
+确保编辑器同时配置基础扩展和增强扩展：
+
+```typescript
+extensions: [
+  Image,          // ← 基础扩展：解析 HTML 中的 <img> 标签
+  ImageResize,    // ← 增强扩展：提供调整大小功能
+]
+```
+
+#### 扩展加载顺序验证
+
+```typescript
+// 检查扩展是否正确加载
+const extensions = editor.value.extensionManager.extensions.map(e => e.name)
+// 应包含：'image', 'imageResize', 'markdown' 等
+```
+
+---
+
+`★ Insight ─────────────────────────────────────`
+- **HTML 解析器的局限性**：通用 HTML 解析器无法完美处理所有边界情况（如超长 data URI）
+- **原生格式的可靠性**：使用编辑器的原生序列化格式（JSON）比通用格式（HTML）更可靠
+- **数据完整性的权衡**：JSON 格式虽然人类不可读，但能完整保留所有数据，对于复杂内容（如 Base64 图片）是更好的选择
+`─────────────────────────────────────────────────`
+
+---
+
+**Created**: 2025-02-10
+**Status**: ✅ 问题已解决
+
+---
