@@ -2418,3 +2418,352 @@ const extensions = editor.value.extensionManager.extensions.map(e => e.name)
 **Status**: ✅ 问题已解决
 
 ---
+
+## 2025-02-11 - localStorage → IndexedDB 迁移：响应式缓存模式
+
+### 一、问题背景
+
+TipTap 编辑器的自动保存功能使用 localStorage 存储，当用户插入 Base64 图片时，容易出现存储容量限制问题。localStorage 的典型限制为 5-10MB，而几张高分辨率图片转 Base64 后就可能超出。
+
+#### 核心约束
+
+- **API 兼容性**：保持 `useAutoSave` 接口不变，组件无需修改
+- **仅基础功能**：保存/恢复/清除，不需要草稿管理功能
+- **不处理旧数据迁移**：localStorage 中的旧草稿直接废弃
+
+---
+
+### 二、技术选型
+
+#### 存储方案对比
+
+| 方案 | 容量 | 性能 | 复杂度 | 推荐场景 |
+|------|--------|--------|----------|----------|
+| **localStorage** | 5-10MB | ⭐⭐⭐⭐⭐ 同步 | ⭐⭐⭐⭐⭐ 极简 | ❌ 大数据 |
+| **IndexedDB** | 几百 MB+ | ⭐⭐⭐ 异步 | ⭐⭐⭐ 中等 | ✅ 大数据 |
+| **SessionStorage** | 5-10MB | ⭐⭐⭐⭐⭐ 同步 | ⭐⭐⭐⭐⭐ 极简 | ❌ 跨标签 |
+| **Cookie** | 4KB | ⭐⭐ 差 | ⭐⭐ 复杂 | ❌ 不适用 |
+
+**选择**：IndexedDB + `idb` 封装库
+
+#### 为什么使用 `idb` 库？
+
+原生 IndexedDB API 事件驱动、回调嵌套，代码复杂度高：
+
+```typescript
+// ❌ 原生 API 的复杂度
+const request = db.transaction(['drafts'], 'readwrite')
+  .objectStore('drafts')
+  .put({ content: value, timestamp: Date.now() }, key)
+request.onsuccess = () => { /* ... */ }
+request.onerror = () => { /* ... */ }
+```
+
+**`idb` 库优势**：
+- Promise-based API，符合现代异步编程习惯
+- ~3KB gzipped，体积极小
+- 类型安全，支持 TypeScript 泛型
+- 自动处理事务和错误
+
+---
+
+### 三、实现步骤
+
+#### 第一步：安装依赖
+
+```bash
+pnpm add idb
+```
+
+#### 第二步：创建数据库封装层
+
+**新建文件**：`app/utils/draftDB.ts`
+
+```typescript
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+
+interface DraftDB extends DBSchema {
+  drafts: {
+    key: string
+    value: {
+      content: any
+      timestamp: number
+    }
+  }
+}
+
+const DB_NAME = 'myblog-drafts'
+const DB_VERSION = 1
+const STORE_NAME = 'drafts'
+
+let dbPromise: Promise<IDBPDatabase<DraftDB>> | null = null
+
+// 单例模式：整个应用共享一个数据库连接
+function getDB() {
+  if (!dbPromise) {
+    dbPromise = openDB<DraftDB>(DB_NAME, DB_VERSION, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME)
+        }
+      },
+    })
+  }
+  return dbPromise
+}
+
+export const draftDB = {
+  async get(key: string): Promise<any | null> {
+    const db = await getDB()
+    const result = await db.get(STORE_NAME, key)
+    return result?.content ?? null
+  },
+
+  async set(key: string, value: any): Promise<void> {
+    const db = await getDB()
+    await db.put(STORE_NAME, {
+      content: value,
+      timestamp: Date.now()
+    }, key)
+  },
+
+  async delete(key: string): Promise<void> {
+    const db = await getDB()
+    await db.delete(STORE_NAME, key)
+  },
+}
+```
+
+**设计要点**：
+- 单例模式：`dbPromise` 确保整个生命周期只创建一次数据库连接
+- Schema 定义：使用 TypeScript 类型定义数据库结构
+- 隔离 timestamp：将业务数据和元数据分离
+
+#### 第三步：重构 useAutoSave composable
+
+**核心改动**：添加响应式缓存机制，保持外部 API 同步
+
+```typescript
+// 新增：响应式缓存状态
+const cachedDraft = ref<T | null>(null)
+const isDbReady = ref(false)
+
+// 新增：异步初始化
+onMounted(async () => {
+  try {
+    const draft = await draftDB.get(storageKey)
+    if (draft !== null) {
+      cachedDraft.value = isEmpty && isEmpty(draft) ? null : draft
+    } else {
+      cachedDraft.value = draft
+    }
+  } catch (error) {
+    console.error('加载草稿失败:', error)
+  } finally {
+    isDbReady.value = true
+  }
+})
+
+// 修改：hasDraft 从缓存读取
+const hasDraft = computed(() => {
+  if (unref(enabled) === false) return false
+  if (!isDbReady.value) return false
+  return cachedDraft.value !== null
+})
+
+// 修改：getDraft 从缓存读取（保持同步 API）
+const getDraft = (): T | null => {
+  if (unref(enabled) === false) return null
+  return cachedDraft.value
+}
+
+// 修改：clearDraft 为异步
+const clearDraft = async () => {
+  cachedDraft.value = null
+  try {
+    await draftDB.delete(storageKey)
+  } catch (error) {
+    console.error('清除草稿失败:', error)
+  }
+}
+```
+
+---
+
+### 四、架构设计
+
+#### 响应式缓存模式
+
+```
+┌─────────────────────────────────────────────────────┐
+│           组件层（同步 API）                  │
+│  MarkDownEditor.client.vue                   │
+│    ↓ uses                                   │
+│  hasDraft: ComputedRef<boolean>              │
+│  getDraft(): T | null                          │
+│  clearDraft(): void (现为 async)             │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│         Composable 层（缓存 + 异步）          │
+│  useAutoSave.ts                              │
+│    ↓ 维护                                    │
+│  cachedDraft: Ref<T | null>   ← 响应式缓存  │
+│  isDbReady: Ref<boolean>      ← 初始化状态   │
+└─────────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────────┐
+│           IndexedDB 层（异步）                   │
+│  draftDB.ts                                    │
+│    ↓ 封装                                    │
+│  draftDB.get() / set() / delete()              │
+└─────────────────────────────────────────────────────┘
+```
+
+**关键设计**：
+- 外部 API 保持同步，组件无需感知 IndexedDB 的异步特性
+- 内部通过响应式缓存处理异步加载
+- `isDbReady` 作为"就绪信号"，确保数据加载完成后再读取
+
+#### 时序控制
+
+**遇到的问题**：刷新后草稿恢复提示不显示
+
+**原因分析**：
+```
+useAutoSave.onMounted (异步加载 IndexedDB)
+    ↓
+useEditor.onCreate → checkAndShowDraftOption() ← 此时可能还没加载完
+    ↓
+getDraft() 返回 null → showRestoreDraft = false
+```
+
+**解决方案**：暴露 `isDbReady`，组件监听后重新检查
+
+```typescript
+// useAutoSave.ts
+return {
+  hasDraft,
+  getDraft,
+  clearDraft,
+  restoreDraft,
+  isDbReady,  // ← 新增暴露
+}
+
+// MarkDownEditor.client.vue
+watch(autoSave.isDbReady, (ready) => {
+  if (ready) {
+    checkAndShowDraftOption()
+  }
+})
+```
+
+---
+
+### 五、核心学习点
+
+#### 1. 响应式缓存模式
+
+**问题**：IndexedDB 是异步的，但组件期望同步 API
+
+**解决**：双缓冲机制
+- `cachedDraft` ref：内存中的草稿副本
+- `isDbReady` ref：数据库是否已加载
+
+**优势**：
+- 组件调用 `getDraft()` 时立即从缓存读取，无需等待
+- 异步加载在后台完成，更新缓存后自动响应
+
+#### 2. 单例模式的数据库连接
+
+```typescript
+let dbPromise: Promise<IDBPDatabase<DraftDB>> | null = null
+
+function getDB() {
+  if (!dbPromise) {
+    dbPromise = openDB<DraftDB>(...)
+  }
+  return dbPromise
+}
+```
+
+**作用**：
+- 整个应用生命周期只创建一次数据库连接
+- 后续调用复用同一个 Promise
+- 避免重复打开数据库的性能损耗
+
+#### 3. 异步下沉到 composable
+
+**原则**：外部接口简单，内部处理复杂度
+
+```typescript
+// 组件侧：简单的同步调用
+const draft = autoSave.getDraft()  // 同步！
+await autoSave.clearDraft()        // 仅删除是异步
+
+// composable 内部：处理异步
+onMounted(async () => {
+  const draft = await draftDB.get(...)  // 异步加载
+  cachedDraft.value = draft
+})
+```
+
+#### 4. 时序问题的诊断与解决
+
+**诊断方法**：
+1. 确认数据：IndexedDB 中有数据
+2. 确认状态：`showRestoreDraft` 为 false
+3. 追踪调用：`checkAndShowDraftOption()` 的执行时机
+4. 找到原因：时序错位，加载未完成就检查
+
+**通用解决模式**：
+- 暴露"就绪状态"（`isDbReady`）
+- 组件监听该状态
+- 状态变为 `true` 后重新执行检查
+
+---
+
+### 六、验证测试
+
+#### 功能测试
+
+| 测试项 | 操作 | 预期结果 |
+|--------|------|----------|
+| 保存测试 | 输入内容，等待 1 秒后刷新 | IndexedDB 有数据 |
+| 恢复测试 | 点击"恢复草稿"按钮 | 内容正确恢复 |
+| 清除测试 | 点击"放弃"按钮 | IndexedDB 数据被删除 |
+| 图片测试 | 插入 Base64 图片后刷新 | 图片完整恢复 |
+
+#### 开发者工具验证
+
+打开 DevTools → Application → IndexedDB：
+- 数据库 `myblog-drafts` 应存在
+- 对象存储 `drafts` 应存在
+- 记录应包含 `content` 和 `timestamp` 字段
+
+---
+
+### 七、文件修改清单
+
+| 操作 | 文件 | 说明 |
+|------|------|------|
+| 新建 | `app/utils/draftDB.ts` | IndexedDB 封装层 |
+| 修改 | `app/composables/useAutoSave.ts` | 添加缓存机制，改为异步 |
+| 修改 | `app/components/MarkDownEditor.client.vue` | `dismissDraft` 改为 async，监听 `isDbReady` |
+| 修改 | `package.json` | 添加 `idb` 依赖 |
+
+---
+
+`★ Insight ─────────────────────────────────────`
+- **响应式缓存模式**：将异步操作隐藏在 composable 内部，对外暴露同步接口，这是处理异步初始化的标准模式
+- **单例连接**：数据库连接是昂贵资源，整个应用共享一个连接，避免重复初始化的开销
+- **时序问题的本质**：组件间的初始化顺序无法保证，使用"就绪信号"让下游组件知道何时可以安全读取
+- **外部接口稳定性**：存储方式的改变（localStorage → IndexedDB）不应影响组件代码，这是良好的架构抽象
+`─────────────────────────────────────────────────`
+
+---
+
+**Created**: 2025-02-11
+**Status**: ✅ 迁移完成，功能正常
+
+---
