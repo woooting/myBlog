@@ -5,6 +5,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   compatibilityDate: '2024-04-03',
   css: ['~/assets/styles/main.scss'],
+  // 前端路径别名（app 目录）
+  alias: {
+    '@app': fileURLToPath(new URL('./app', import.meta.url)),
+  },
   // Nitro 服务器配置
   nitro: {
     // Server 端路径别名（使用绝对路径）
@@ -18,22 +22,11 @@ export default defineNuxtConfig({
   // Vite 配置
   ssr: {
     // 跳过这些纯客户端包的 SSR 处理
-    noExternal: [
-      '@tiptap/vue-3',
-      '@tiptap/starter-kit',
-      '@tiptap/extension-placeholder',
-      '@tiptap/extension-link',
-      '@tiptap/extension-image',
-      '@tiptap/extension-code-block-lowlight',
-      '@tiptap/pm',
-      'lowlight',
-      'tiptap-markdown',
-    ],
+    noExternal: [],
   },
   vite: {
     optimizeDeps: {
       // 禁用自动依赖扫描（由 @nuxt/content 等模块手动配置 include）
-      noDiscovery: true,
       // 明确包含 TipTap 相关包用于客户端预构建
       include: [
         '@tiptap/vue-3',
