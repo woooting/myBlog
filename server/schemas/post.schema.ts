@@ -65,6 +65,21 @@ export const getListQuerySchema = z.object({
 export type GetListQuery = z.infer<typeof getListQuerySchema>
 
 /**
+ * 分页查询参数验证
+ */
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(10),
+  status: postStatusEnum.optional(),
+  category: z.string().trim().optional(),
+})
+
+/**
+ * 推导类型：分页查询参数
+ */
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>
+
+/**
  * 路径参数验证：文章 ID
  */
 export const postParamsSchema = z.object({
@@ -92,3 +107,15 @@ export const publishActionSchema = z.object({
  * 推导类型：发布操作的输入
  */
 export type PublishActionInput = z.infer<typeof publishActionSchema>
+
+/**
+ * 批量删除文章的请求体验证
+ */
+export const batchDeleteSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, { message: '至少选择一篇文章' }),
+})
+
+/**
+ * 推导类型：批量删除的输入
+ */
+export type BatchDeleteInput = z.infer<typeof batchDeleteSchema>

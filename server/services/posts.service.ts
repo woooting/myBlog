@@ -1,5 +1,5 @@
 import db from '../utils/db'
-import { errors } from '../utils/response'
+import { errors } from '@server/utils/response'
 
 export interface Post {
   id?: number
@@ -54,6 +54,72 @@ export const postsService = {
     return stmt.all(...params)
   },
 
+  // 获取总数（用于分页）
+  getCount(options?: { status?: string; category?: string }) {
+    let sql = 'SELECT COUNT(*) as count FROM posts WHERE 1=1'
+    const params: any[] = []
+
+    if (options?.status) {
+      sql += ' AND status = ?'
+      params.push(options.status)
+    }
+
+    if (options?.category) {
+      sql += ' AND category = ?'
+      params.push(options.category)
+    }
+
+    const stmt = db.prepare(sql)
+    const result = stmt.get(...params) as { count: number }
+    return result?.count || 0
+  },
+
+  // 分页查询
+  getPaginated(options: {
+    page?: number
+    pageSize?: number
+    status?: string
+    category?: string
+  }) {
+    const { page = 1, pageSize = 10 } = options
+
+    // 计算偏移量
+    const offset = (page - 1) * pageSize
+
+    let sql = 'SELECT * FROM posts WHERE 1=1'
+    const params: any[] = []
+
+    if (options?.status) {
+      sql += ' AND status = ?'
+      params.push(options.status)
+    }
+
+    if (options?.category) {
+      sql += ' AND category = ?'
+      params.push(options.category)
+    }
+
+    // 添加排序和分页
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    params.push(pageSize, offset)
+
+    const stmt = db.prepare(sql)
+    const posts = stmt.all(...params)
+
+    // 获取总数
+    const total = this.getCount(options)
+
+    return {
+      data: posts,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    }
+  },
+
   getById(id: number) {
     const stmt = db.prepare('SELECT * FROM posts WHERE id = ?')
     const post = stmt.get(id)
@@ -89,6 +155,19 @@ export const postsService = {
     }
     const stmt = db.prepare(`DELETE FROM posts WHERE id = ?`)
     return stmt.run(id)
+  },
+
+  batchDelete(ids: number[]) {
+    if (!ids || ids.length === 0) {
+      return { count: 0 }
+    }
+
+    // 使用 IN 子句批量删除
+    const placeholders = ids.map(() => '?').join(',')
+    const stmt = db.prepare(`DELETE FROM posts WHERE id IN (${placeholders})`)
+    const result = stmt.run(...ids)
+
+    return { count: result.changes }
   },
 
   publish(id:number) {
