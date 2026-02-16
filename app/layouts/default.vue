@@ -4,7 +4,7 @@
     <div class="box-border content">
       <div class="layoutNav">
         <div class="nav-area">
-          <NavList></NavList>
+          <NavList :nav-list="navList"></NavList>
         </div>
       </div>
       <div class="pagerouter"><NuxtPage /></div>
@@ -12,7 +12,27 @@
     </div>
   </div>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import type { NavItem } from '@app/components/NavList.vue'
+
+const navList: NavItem[] = [
+  {
+    name: 'Home',
+    path: '/',
+    iconname: 'lucide:home',
+  },
+  {
+    name: 'admin',
+    path: '/admin',
+    iconname: 'lucide:user',
+  },
+  {
+    name: 'messgae',
+    path: '/message',
+    iconname: 'lucide:message-circle',
+  }
+]
+</script>
 
 <style lang="scss" scoped>
 .default-layout {
