@@ -39,6 +39,25 @@ export interface GetListParams {
   limit?: number
 }
 
+// 分页查询参数
+export interface PaginatedParams {
+  page?: number
+  pageSize?: number
+  status?: 'draft' | 'published'
+  category?: string
+}
+
+// 分页响应数据
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
 // ==================== API 方法 ====================
 
 /**
@@ -53,6 +72,13 @@ export const getList = (params?: GetListParams) => {
  */
 export const getListWithToast = (params?: GetListParams) => {
   return useRequest().request<Post[]>('/api/posts', { params, showToast: true })
+}
+
+/**
+ * 分页获取文章列表
+ */
+export const getPaginatedList = (params?: PaginatedParams) => {
+  return useRequest().request<PaginatedResponse<Post>>('/api/posts/paginated', { params })
 }
 
 /**
@@ -100,6 +126,17 @@ export const update = (id: number, data: UpdatePostDto) => {
 export const deletePost = (id: number) => {
   return useRequest().request<void>(`/api/posts/${id}`, {
     method: 'DELETE',
+    showToast: true,
+  })
+}
+
+/**
+ * 批量删除文章(带成功提示)
+ */
+export const batchDeletePosts = (ids: number[]) => {
+  return useRequest().request<{ count: number }>('/api/posts/batch-delete', {
+    method: 'POST',
+    body: { ids },
     showToast: true,
   })
 }
