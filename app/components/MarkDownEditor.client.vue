@@ -317,7 +317,7 @@ const toolbarGroups = computed(() => {
 
   const ed = editor.value
   const chain = () => ed.chain().focus()
-
+  
   return [
     {
       title: 'markdown',
