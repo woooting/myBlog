@@ -288,7 +288,7 @@ const onImageFileSelect = async (e: Event) => {
   reader.readAsDataURL(file)
 }
 
-// 使用拖拽 composable
+// 使用拖拽 composable 实现md文件一键导入
 const { isDragging, onDragOver, onDragLeave, onDrop } = useDragAndDrop({
   onDropFile: async (file) => {
     const content = await file.text()
@@ -317,7 +317,7 @@ const toolbarGroups = computed(() => {
 
   const ed = editor.value
   const chain = () => ed.chain().focus()
-  
+
   return [
     {
       title: 'markdown',
