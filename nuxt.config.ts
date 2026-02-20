@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
-  modules: ['@nuxt/content', '@nuxt/icon', '@nuxt/ui', '@vueuse/nuxt'],
+  modules: ['@nuxt/content', '@nuxt/icon', '@nuxt/ui', '@vueuse/nuxt', '@element-plus/nuxt'],
   devtools: { enabled: true },
   compatibilityDate: '2024-04-03',
   css: ['~/assets/styles/main.scss'],
