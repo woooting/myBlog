@@ -5,6 +5,50 @@ import db from '../utils/db'
  * 在服务器启动时创建必要的表结构
  */
 export default defineNitroPlugin(() => {
+  // 创建 posts 表（如果不存在）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      summary TEXT,
+      status TEXT NOT NULL DEFAULT 'draft',
+      category TEXT,
+      tags TEXT,
+      cover_image TEXT,
+      view_count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      published_at DATETIME
+    )
+  `)
+
+  // 创建 tags 表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      slug TEXT NOT NULL UNIQUE,
+      desc TEXT,
+      count INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  // 创建 post_tags 关联表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS post_tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      post_id INTEGER NOT NULL,
+      tag_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+      UNIQUE(post_id, tag_id)
+    )
+  `)
+
   // 创建 messages 表
   db.exec(`
     CREATE TABLE IF NOT EXISTS messages (
@@ -22,5 +66,43 @@ export default defineNitroPlugin(() => {
     ON messages(created_at DESC)
   `)
 
-  console.log('✓ Database initialized: messages table')
+  // tags 表索引
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_tags_name
+    ON tags(name COLLATE NOCASE)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_tags_count
+    ON tags(count DESC)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_tags_slug
+    ON tags(slug)
+  `)
+
+  // post_tags 表索引
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_post_tags_post_id
+    ON post_tags(post_id)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id
+    ON post_tags(tag_id)
+  `)
+
+  // posts 表索引
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_posts_status
+    ON posts(status)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_posts_created_at
+    ON posts(created_at DESC)
+  `)
+
+  console.log('✓ Database initialized: posts, tags, post_tags, messages tables')
 })

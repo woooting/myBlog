@@ -24,6 +24,9 @@ export const createPostSchema = z.object({
   status: postStatusEnum.default('draft'),
   category: z.string().trim().optional(),
   tags: z.array(z.string()).optional(),
+  tagIds: z.array(z.number().int().positive())
+    .max(3, '最多选择 3 个标签')
+    .optional(),
 
   // 可选的 URL 验证
   cover_image: z.string().url('封面图必须是有效的 URL').optional().or(z.literal('')),
@@ -37,7 +40,11 @@ export type CreatePostInput = z.infer<typeof createPostSchema>
 /**
  * 更新文章的请求体验证（所有字段可选）
  */
-export const updatePostSchema = createPostSchema.partial()
+export const updatePostSchema = createPostSchema.partial().extend({
+  tagIds: z.array(z.number().int().positive())
+    .max(3, '最多选择 3 个标签')
+    .optional(),
+})
 
 /**
  * 推导类型：更新文章的输入
