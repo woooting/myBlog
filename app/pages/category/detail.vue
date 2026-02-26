@@ -80,7 +80,7 @@ const DRAFT_TAGS = [
 // 提示：你需要决定标签的展示方式，是否需要全局标签配置
 const getTagName = (tagId: string): string => {
   // 请实现此函数，返回标签的显示名称
-  
+
   return tagId
 }
 
