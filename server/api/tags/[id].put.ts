@@ -13,9 +13,9 @@ import { updateTagSchema, tagParamsSchema } from '@server/schemas/tag.schema'
  * - name: 标签名称（可选）
  * - desc: 标签描述（可选）
  */
-export default defineEventHandler((event) => {
-  const { id } = validateParams(event, tagParamsSchema)
-  const body = validateBody(event, updateTagSchema)
+export default defineEventHandler(async (event) => {
+  const { id } = await validateParams(event, tagParamsSchema)
+  const body = await validateBody(event, updateTagSchema)
 
   const updateData: Record<string, any> = {}
   if (body.name !== undefined) {

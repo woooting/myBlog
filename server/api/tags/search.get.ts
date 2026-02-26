@@ -16,8 +16,8 @@ import { searchQuerySchema } from '@server/schemas/tag.schema'
  * - 按使用频率降序
  * - 按名称字母排序
  */
-export default defineEventHandler((event) => {
-  const query = validateQuery(event, searchQuerySchema)
+export default defineEventHandler(async (event) => {
+  const query = await validateQuery(event, searchQuerySchema)
 
   const results = tagsService.searchByName(query.q, query.limit)
 

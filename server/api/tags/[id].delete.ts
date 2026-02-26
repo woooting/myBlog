@@ -11,8 +11,8 @@ import { tagParamsSchema } from '@server/schemas/tag.schema'
  *
  * 注意：删除标签会自动级联删除 post_tags 中的关联记录
  */
-export default defineEventHandler((event) => {
-  const { id } = validateParams(event, tagParamsSchema)
+export default defineEventHandler(async (event) => {
+  const { id } = await validateParams(event, tagParamsSchema)
 
   const result = tagsService.delete(id)
 

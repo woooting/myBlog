@@ -12,8 +12,8 @@ import { getTagListQuerySchema } from '@server/schemas/tag.schema'
  * - sort: 排序字段（count/name/created_at，默认 count）
  * - order: 排序方向（asc/desc，默认 desc）
  */
-export default defineEventHandler((event) => {
-  const query = validateQuery(event, getTagListQuerySchema)
+export default defineEventHandler(async (event) => {
+  const query = await validateQuery(event, getTagListQuerySchema)
 
   const result = tagsService.getList(query)
 
