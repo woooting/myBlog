@@ -66,6 +66,9 @@ import * as postApi from '@app/api/posts.api'
 import type { Post } from '@app/api/posts.api'
 import { formatRelativeTime } from '@app/utils/dateUtils'
 
+const toast = useToastNotification()
+const route = useRoute()
+
 // 轮播图数据
 const carouselItems = [
   {
@@ -147,6 +150,13 @@ const navigateToPost = (id: number) => {
 // 页面加载时获取文章
 onMounted(() => {
   fetchPosts()
+
+  // 检查是否是登录成功后跳转过来的
+  if (route.query.login === 'success') {
+    toast.success('登录成功！欢迎回来 👋')
+    // 清除 URL 参数，避免刷新时重复显示
+    navigateTo('/', { replace: true })
+  }
 })
 </script>
 
