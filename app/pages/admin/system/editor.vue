@@ -78,19 +78,8 @@
 
         <!-- 右侧：标签选择器 -->
         <div class="tag-selector-area">
-          <div class="tag-label">文章标签</div>
-          <div class="tag-list">
-            <button
-              v-for="tag in DRAFT_TAGS"
-              :key="tag.id"
-              @click="selectTag(tag)"
-              :class="{ 'selected': selectedTag?.id === tag.id }"
-              class="tag-button"
-            >
-              <Icon :name="tag.icon" :size="16" />
-              <span>{{ tag.name }}</span>
-            </button>
-          </div>
+          <div class="tag-label">文章标签（最多3个）</div>
+          <TagSelector v-model="form.tagIds" :max-tags="3" placeholder="输入标签名，如 Vue、React..." />
         </div>
       </div>
 
@@ -109,9 +98,10 @@ import { useToast } from 'vue-toastification'
 const form = ref({
   title: '',
   content: '',
+  tagIds: [] as number[],
 })
 
-// 草稿标签定义
+// 草稿标签定义（保留默认封面功能）
 const DRAFT_TAGS = [
   { id: 'learning', name: '学习经验', icon: 'lucide:book-open', defaultImage: '/images/draft-learning.jpg' },
   { id: 'inspiration', name: '灵感', icon: 'lucide:lightbulb', defaultImage: '/images/draft-inspiration.jpg' },
@@ -166,7 +156,7 @@ onMounted(() => {
   }
 })
 
-// 选择标签
+// 选择标签（用于封面图选择）
 const selectTag = (tag: typeof DRAFT_TAGS[0]) => {
   selectedTag.value = tag
   // 如果用户没有上传自定义封面（封面图以 data:image 开头或为空），则使用标签的默认封面
@@ -246,12 +236,12 @@ const submit = async () => {
       title: form.value.title,
       content: form.value.content,
       cover_image: currentCoverImage.value,
-      tags: selectedTag.value ? [selectedTag.value.id] : undefined,
+      tagIds: form.value.tagIds.length > 0 ? form.value.tagIds : undefined,
       status: 'published',
     })
     toast.success('发布成功！')
     // 重置表单
-    form.value = { title: '', content: '' }
+    form.value = { title: '', content: '', tagIds: [] }
     // 重置封面图和标签
     if (DRAFT_TAGS.length > 0) {
       selectedTag.value = DRAFT_TAGS[0]

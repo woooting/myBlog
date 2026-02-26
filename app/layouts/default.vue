@@ -30,7 +30,7 @@ const navList: NavItem[] = [
     name: 'messgae',
     path: '/message',
     iconname: 'lucide:message-circle',
-  }
+  },
 ]
 </script>
 
@@ -38,6 +38,7 @@ const navList: NavItem[] = [
 .default-layout {
   height: 100vh;
   display: flex;
+  background: var(--bg-page-gradient);
 }
 
 .content {
