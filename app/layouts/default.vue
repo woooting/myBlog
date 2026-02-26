@@ -45,6 +45,7 @@ const navList: NavItem[] = [
   gap: 10px;
   position: relative;
   width: 100%;
+  height: 100%;
   margin: 0 auto;
   padding-top: 90px;
   max-width: 1200px;
@@ -67,6 +68,16 @@ const navList: NavItem[] = [
     flex: 1;
     order: 2;
     min-width: 320px;
+    min-height: 0; // 关键：允许 flex 子项正确收缩
+    overflow-y: auto; // 关键：创建内部滚动
+
+    // 隐藏滚动条（兼容所有浏览器）
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
   }
 
   .unkonwn {
