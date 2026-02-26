@@ -43,6 +43,7 @@ interface UseAutoSaveOptions<T> {
  * ```
  */
 export function useAutoSave<T>(options: UseAutoSaveOptions<T>) {
+  //props
   const { getValue, setValue, storageKey, delay = 1000, enabled = true, isEmpty } = options
 
   // ===== 响应式缓存 =====
@@ -75,7 +76,7 @@ export function useAutoSave<T>(options: UseAutoSaveOptions<T>) {
     isInitialized = true
   }, delay + 300)
 
-  // ===== hasDraft：从缓存读取 =====
+  // ===== hasDraft：检查是否有草稿 =====
   const hasDraft = computed(() => {
     if (unref(enabled) === false) return false
     if (!isDbReady.value) return false
@@ -120,7 +121,7 @@ export function useAutoSave<T>(options: UseAutoSaveOptions<T>) {
       // 更新缓存
       cachedDraft.value = newValue
 
-      // 如果有 isEmpty 检查且内容为空，删除草稿
+      // 如果有 isEmpty 检查且内容为空，删除idnexdb的空草稿
       if (isEmpty && isEmpty(newValue)) {
         if (isInitialized) {
           try {
