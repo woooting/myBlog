@@ -22,6 +22,9 @@ html {
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f5;
   --bg-tertiary: #ebebeb;
+  --bg-page-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --bg-dialog: rgba(255, 255, 255, 0.85);
+  --bg-dialog-item: rgba(255, 255, 255, 0.6);
   --text-primary: #333333;
   --text-secondary: #666666;
   --text-tertiary: #999999;
@@ -35,6 +38,9 @@ html {
   --bg-primary: #1a1a1a;
   --bg-secondary: #2a2a2a;
   --bg-tertiary: #3a3a3a;
+  --bg-page-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  --bg-dialog: rgba(26, 26, 26, 0.9);
+  --bg-dialog-item: rgba(255, 255, 255, 0.05);
   --text-primary: #f5f5f5;
   --text-secondary: #b0b0b0;
   --text-tertiary: #808080;
@@ -82,4 +88,9 @@ html {
 
 .text-clamp-3 {
   @include text-clamp(3);
+}
+
+// 防止 Toast 导致页面出现滚动条
+body {
+  overflow-x: hidden;
 }

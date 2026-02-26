@@ -28,6 +28,7 @@
       width="600px"
       :append-to-body="true"
       @closed="handleDialogClosed"
+      class="search-dialog"
     >
       <div class="search-content">
         <el-input
@@ -35,6 +36,7 @@
           placeholder="请输入搜索关键词"
           clearable
           size="large"
+          class="search-input"
           @input="handleInputChange"
         >
           <template #prefix>
@@ -168,7 +170,7 @@ const handleDialogClosed = () => {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .floating-bar {
   position: fixed;
   top: 0;
@@ -230,7 +232,76 @@ const handleDialogClosed = () => {
   }
 }
 
-// 搜索对话框内容区
+// ========== 搜索对话框美化 ==========
+// 对话框主体
+.search-dialog.el-dialog {
+  background: var(--bg-dialog);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+              0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+// 标题区域
+.search-dialog .el-dialog__header {
+  background: transparent;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.search-dialog .el-dialog__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+// 内容区域
+.search-dialog .el-dialog__body {
+  padding: 20px 24px 24px;
+}
+
+// 搜索输入框 - 添加命名空间前缀，避免影响其他组件
+.search-dialog .search-input .el-input__wrapper {
+  border-radius: 14px;
+  padding: 4px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05),
+              0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.search-dialog .search-input .el-input__wrapper:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08),
+              0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.search-dialog .search-input .el-input__wrapper.is-focus {
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15),
+              0 2px 6px rgba(0, 122, 255, 0.1);
+}
+
+.search-dialog .search-input .el-input__inner {
+  font-size: 15px;
+}
+
+.search-dialog .search-input .el-input__prefix {
+  color: var(--text-secondary);
+}
+
+// 深色模式适配
+.dark .search-dialog.el-dialog {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark .search-dialog .el-dialog__header {
+  background: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+// 搜索内容区
 .search-content {
   max-height: 60vh;
   overflow-y: auto;
@@ -247,9 +318,14 @@ const handleDialogClosed = () => {
   color: var(--text-secondary);
 
   .loading-icon {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     animation: spin 1s linear infinite;
+    color: var(--accent-color);
+  }
+
+  span {
+    font-size: 14px;
   }
 }
 
@@ -272,15 +348,19 @@ const handleDialogClosed = () => {
 
 .search-result-item {
   padding: 1rem;
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s;
+  border-radius: 12px;
+  background: var(--bg-dialog-item);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 
   &:hover {
     border-color: var(--accent-color);
-    background: var(--bg-tertiary);
+    background: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08),
+                0 2px 6px rgba(0, 122, 255, 0.1);
   }
 
   .item-title {
@@ -296,12 +376,23 @@ const handleDialogClosed = () => {
     gap: 0.5rem;
 
     .tag-item {
-      padding: 0.25rem 0.625rem;
+      padding: 0.3rem 0.75rem;
       font-size: 0.75rem;
-      border-radius: 4px;
-      background: var(--accent-color);
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent-color) 0%, #0051d5 100%);
       color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
     }
+  }
+}
+
+// 深色模式搜索结果
+.dark .search-result-item {
+  border-color: rgba(255, 255, 255, 0.06);
+
+  &:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-color);
   }
 }
 
@@ -312,13 +403,18 @@ const handleDialogClosed = () => {
   align-items: center;
   justify-content: center;
   padding: 3rem 0;
-  gap: 0.75rem;
-  color: var(--text-secondary);
+  gap: 1rem;
+  color: var(--text-tertiary);
 
   svg {
-    width: 48px;
-    height: 48px;
-    opacity: 0.5;
+    width: 56px;
+    height: 56px;
+    opacity: 0.3;
+    stroke: var(--accent-color);
+  }
+
+  span {
+    font-size: 14px;
   }
 }
 </style>
