@@ -209,6 +209,13 @@ export const tagsService = {
    * 建立文章与标签的关联
    */
   linkPostToTags(postId: number, tagIds: number[]) {
+    // 获取旧的关联标签 ID
+    const oldPostTags = db
+      .prepare('SELECT tag_id FROM post_tags WHERE post_id = ?')
+      .all(postId) as Array<{ tag_id: number }>
+
+    const oldTagIds = oldPostTags.map((pt) => pt.tag_id)
+
     const transaction = db.transaction((ids: number[]) => {
       // 先删除旧的关联
       db.prepare('DELETE FROM post_tags WHERE post_id = ?').run(postId)
@@ -220,6 +227,24 @@ export const tagsService = {
 
       for (const tagId of ids) {
         stmt.run(postId, tagId)
+      }
+
+      // 更新标签统计：对旧标签减少计数，对新标签增加计数
+      const oldTagSet = new Set(oldTagIds)
+      const newTagSet = new Set(ids)
+
+      // 旧标签中被移除的：减少计数
+      for (const tagId of oldTagIds) {
+        if (!newTagSet.has(tagId)) {
+          this.updateCount(tagId, -1)
+        }
+      }
+
+      // 新标签中新添加的：增加计数
+      for (const tagId of ids) {
+        if (!oldTagSet.has(tagId)) {
+          this.updateCount(tagId, 1)
+        }
       }
 
       return ids.length

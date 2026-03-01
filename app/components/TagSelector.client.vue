@@ -196,7 +196,8 @@ async function openDialog() {
 
   // 加载热门标签
   try {
-    const tags = await tagsApi.getPopularTags(20)
+    const tags = await tagsApi.getPopular()
+    console.log(tags)
     popularTags.value = tags
     // 更新所有标签缓存
     for (const tag of tags) {

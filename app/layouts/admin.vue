@@ -24,6 +24,11 @@ const adminNavList: NavItem[] = [
     iconname: 'lucide:file-text',
   },
   {
+    name: '标签管理',
+    path: '/admin/system/tags',
+    iconname: 'lucide:tag',
+  },
+  {
     name: 'editor',
     path: '/admin/system/editor',
     iconname: 'lucide:edit-3',

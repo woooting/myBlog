@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
     success: true,
     code: 200,
     message: '获取标签列表成功',
-    data: result.data,
-    pagination: result.pagination,
+    data: result,  // 包装整个 result，包含 data 和 pagination
   }
 })
