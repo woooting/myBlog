@@ -1,7 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
-  modules: ['@nuxt/content', '@nuxt/icon', '@nuxt/ui', '@vueuse/nuxt', '@element-plus/nuxt'],
+  modules: [
+    '@nuxt/content',
+    '@nuxt/icon',
+    '@nuxt/ui',
+    '@vueuse/nuxt',
+    '@element-plus/nuxt',
+    '@sidebase/nuxt-auth',
+  ],
+  // Auth 认证配置 (OAuth - Google & GitHub)
+  auth: {
+    globalAppMiddleware: false, // 关闭全局中间件，在页面单独控制
+    provider: {
+      type: 'authjs', // 使用 Auth.js (NextAuth.js) 进行 OAuth 认证
+      trustHost: true, // 信任代理主机（生产环境需要）
+      addDefaultCallbackUrl: true, // 添加默认回调 URL
+    },
+  },
   devtools: { enabled: true },
   compatibilityDate: '2024-04-03',
   css: ['~/assets/styles/main.scss'],
@@ -22,6 +38,7 @@ export default defineNuxtConfig({
   // Vite 配置
   ssr: {
     // 跳过这些纯客户端包的 SSR 处理
+    // 注意：不要包含 dayjs，让 Element Plus 自己处理
     noExternal: [],
   },
   vite: {

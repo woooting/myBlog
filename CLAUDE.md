@@ -118,7 +118,7 @@ server/                 # 后端（Nitro）
 
 - **后端详细规范**：`server/CLAUDE.md`（数据库表结构、API 路由列表）
 - **前端组件列表**：`app/CLAUDE.md`（组件、Composables、页面路由）
-- **技术日志规范**：`resource/技术日志记录规范.md`
+- **技术日志规范**：`resource/技术日志记录规范.md`(添加，更新log文档时，必须读取这个规范md)
 
 ---
 
