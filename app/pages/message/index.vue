@@ -33,18 +33,10 @@
         >
           <Icon name="lucide:image" :size="20" />
         </button>
-        <button
-          class="btn-emoji"
-          @click="insertEmoji"
-          :disabled="isSubmitting"
-        >
+        <button class="btn-emoji" @click="insertEmoji" :disabled="isSubmitting">
           <Icon name="lucide:smile" :size="20" />
         </button>
-        <button
-          class="btn-submit"
-          :disabled="!canSubmit || isSubmitting"
-          @click="submitMessage"
-        >
+        <button class="btn-submit" :disabled="!canSubmit || isSubmitting" @click="submitMessage">
           {{ isSubmitting ? '发送中...' : '发送' }}
         </button>
       </div>
@@ -75,11 +67,7 @@
       <!-- Message List -->
       <div v-else class="message-list">
         <!-- 消息气泡 -->
-        <div
-          v-for="message in messages"
-          :key="message.id"
-          class="message-bubble"
-        >
+        <div v-for="message in messages" :key="message.id" class="message-bubble">
           <div class="message-content">
             {{ message.content }}
           </div>
@@ -87,7 +75,15 @@
             <img :src="message.image_url" alt="留言图片" />
           </div>
           <div class="message-meta">
-            <span class="visitor-id">{{ formatVisitorId(message.visitor_id) }}</span>
+            <div class="author-info">
+              <img
+                v-if="formatAuthor(message).avatar"
+                :src="formatAuthor(message).avatar"
+                :alt="formatAuthor(message).name"
+                class="author-avatar"
+              />
+              <span class="author-name">{{ formatAuthor(message).name }}</span>
+            </div>
             <span class="message-time">{{ formatTime(message.created_at) }}</span>
           </div>
         </div>
@@ -99,9 +95,7 @@
         class="load-more"
         @click="loadMore"
       >
-        <button class="btn-load-more">
-          加载更多 ({{ remaining }})
-        </button>
+        <button class="btn-load-more">加载更多 ({{ remaining }})</button>
       </div>
     </div>
   </div>
@@ -111,6 +105,23 @@
 import { messagesApi, type Message } from '@app/api/messages.api'
 import { uploadApi } from '@app/api/upload.api'
 import { formatRelativeTime } from '@app/utils/dateUtils'
+
+// 使用 useAuth 获取当前用户信息（自动导入）
+const { data: session, status } = useAuth()
+
+// 当前登录用户信息（响应式）
+const currentUser = computed(() => {
+  if (status.value === 'authenticated' && session.value?.user) {
+    return {
+      name: session.value.user.name,
+      email: session.value.user.email,
+      avatar: session.value.user.image,
+      id: (session.value.user as any).id,
+      provider: (session.value.user as any).provider,
+    }
+  }
+  return null
+})
 
 // 状态
 const content = ref('')
@@ -134,10 +145,30 @@ const hasImage = computed(() => !!imageUrl.value)
 
 const hasMore = computed(() => messages.value.length < totalMessages.value)
 const remaining = computed(() => totalMessages.value - messages.value.length)
+const isAuthenticated = computed(() => status.value === 'authenticated')
 
 // 方法
-const formatVisitorId = (id: string) => {
-  return `访客#${id.slice(0, 8)}`
+/**
+ * 格式化作者信息
+ * - 已登录用户：显示用户名和头像
+ * - 访客：显示访客ID
+ */
+const formatAuthor = (message: Message) => {
+  if (!message.is_guest && message.username) {
+    // 已登录用户
+    return {
+      name: message.username,
+      avatar: message.user_avatar,
+      isGuest: false,
+    }
+  } else {
+    // 访客
+    return {
+      name: `访客#${message.visitor_id?.slice(0, 8)}`,
+      avatar: null,
+      isGuest: true,
+    }
+  }
 }
 
 const formatTime = (time: string) => {
@@ -202,13 +233,18 @@ const submitMessage = async () => {
       image_url: uploadedImageUrl || undefined,
     })
 
-    // 直接插入新消息到数组头部，新消息出现在视觉顶部
+    // 直接插入新消息到数组头部，包含当前用户信息
     messages.value.unshift({
       id: result.id,
+      user_id: result.user_id,
       visitor_id: result.visitor_id,
       content: result.content,
       image_url: result.image_url,
       created_at: new Date().toISOString(),
+      // 如果已登录，添加用户信息（处理 null 情况）
+      username: currentUser.value?.name ?? undefined,
+      user_avatar: currentUser.value?.avatar ?? undefined,
+      is_guest: !isAuthenticated.value,
     })
 
     // 更新总数
@@ -466,8 +502,27 @@ onMounted(() => {
   .message-meta {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 12px;
     color: var(--text-secondary);
+
+    .author-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .author-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .author-name {
+        font-weight: 500;
+        color: var(--accent-color);
+      }
+    }
   }
 }
 

@@ -16,8 +16,17 @@
       <button class="icon-btn">
         <Icon name="lucide:bell" />
       </button>
-      <button class="icon-btn">
-        <Icon name="lucide:user" />
+      <button class="icon-btn user-btn" @click="handleUserClick">
+        <!-- 登录后显示头像 -->
+        <img
+          v-if="status === 'authenticated' && data?.user?.image && !avatarLoadFailed"
+          :src="data.user.image"
+          :alt="data.user.name"
+          class="user-avatar"
+          @error="handleAvatarError"
+        />
+        <!-- 未登录或头像加载失败显示图标 -->
+        <Icon v-else name="lucide:user" />
       </button>
     </div>
 
@@ -87,8 +96,35 @@
 <script setup lang="ts">
 import { searchPosts } from '@app/api/search.api'
 import type { SearchPostItem } from '@app/api/search.api'
-
+const { data, signIn, signOut, status } = useAuth()
 const { theme, toggleTheme, isDark } = useTheme()
+const toast = useToastNotification()
+
+// 头像加载失败标记
+const avatarLoadFailed = ref(false)
+
+// 头像加载错误处理
+const handleAvatarError = () => {
+  avatarLoadFailed.value = true
+}
+
+// 处理用户图标点击
+const handleUserClick = async () => {
+  if (status.value === 'authenticated') {
+    // 已登录：显示退出确认对话框（使用浏览器原生 confirm，避免 dayjs 依赖问题）
+    if (confirm('确定要退出登录吗？')) {
+      // 使用 redirect: false 阻止自动跳转，signOut 内部会刷新 session 状态
+      await signOut({ redirect: false })
+      // 显示退出成功提示
+      toast.success('已安全退出登录 👋')
+      // 清理完成后跳转首页
+      navigateTo('/')
+    }
+  } else {
+    // 未登录：显示提示并跳转登录页
+    signIn(undefined, { callbackUrl: '/' })
+  }
+}
 
 // 搜索对话框状态
 const searchDialogVisible = ref(false)
@@ -228,6 +264,26 @@ const handleDialogClosed = () => {
 
     &:active {
       transform: scale(0.95);
+    }
+  }
+
+  // 用户头像样式
+  .user-btn {
+    position: relative;
+    overflow: hidden;
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent-color);
+      transition: all 0.3s ease;
+    }
+
+    &:hover .user-avatar {
+      transform: scale(1.1);
+      border-color: var(--text-primary);
     }
   }
 }

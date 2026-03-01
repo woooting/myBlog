@@ -41,8 +41,14 @@
             @error="handleImageError"
           />
           <!-- 标签徽章 -->
-          <div v-if="post.tags && post.tags.length > 0" class="tag-badge">
-            {{ getTagName(post.tags[0]) }}
+          <div v-if="post.tags && post.tags.length > 0" class="tag-badges">
+            <span
+              v-for="tag in post.tags"
+              :key="tag"
+              class="tag-badge"
+            >
+              {{ tag }}
+            </span>
           </div>
         </div>
         <div class="text-area">
@@ -72,30 +78,22 @@ const route = useRoute()
 // 轮播图数据
 const carouselItems = [
   {
-    image: 'https://picsum.photos/1200/400?random=1',
-    title: '第一张幻灯片',
-    description: '这是第一张幻灯片的描述文字',
+    image: '/randomimg1.jpg',
+    title: '轮播图1',
+    description: 'test1',
     link: '/post/1',
   },
   {
-    image: 'https://picsum.photos/1200/400?random=2',
-    title: '第二张幻灯片',
-    description: '这是第二张幻灯片的描述文字',
+    image: '/randomimg2.jpg',
+    title: '轮播图2',
+    description: 'test2',
   },
   {
-    image: 'https://picsum.photos/1200/400?random=3',
-    title: '第三张幻灯片',
+    image: '/randomimg3.jpg',
+    title: '轮播图3',
+    description: 'test3',
   },
 ]
-
-// 标签配置
-const DRAFT_TAGS = [
-  { id: 'learning', name: '学习经验' },
-  { id: 'inspiration', name: '灵感' },
-  { id: 'abstract', name: '抽象思想' },
-  { id: 'work', name: '工作' },
-  { id: 'life', name: '有感而发' },
-] as const
 
 // 状态管理
 const posts = ref<Post[]>([])
@@ -119,12 +117,6 @@ const fetchPosts = async () => {
   } finally {
     isLoading.value = false
   }
-}
-
-// 获取标签名称
-const getTagName = (tagId: string): string => {
-  const tag = DRAFT_TAGS.find(t => t.id === tagId)
-  return tag?.name || tagId
 }
 
 // 提取摘要（从 content 中提取纯文本）
@@ -282,10 +274,16 @@ onMounted(() => {
         object-fit: cover;
       }
 
-      .tag-badge {
+      .tag-badges {
         position: absolute;
         top: 8px;
         left: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag-badge {
         padding: 0.25rem 0.75rem;
         font-size: 12px;
         font-weight: 500;
