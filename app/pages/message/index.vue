@@ -102,7 +102,8 @@
 </template>
 
 <script setup lang="ts">
-import { messagesApi, type Message } from '@app/api/messages.api'
+import { type Message } from '@app/api/messages.api'
+import * as messagesApi from '@app/api/messages.api'
 import { uploadApi } from '@app/api/upload.api'
 import { formatRelativeTime } from '@app/utils/dateUtils'
 
