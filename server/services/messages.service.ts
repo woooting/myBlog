@@ -1,4 +1,5 @@
 import db from '../utils/db'
+import { errors } from '@server/utils/response'
 
 /**
  * 留言数据模型
@@ -87,5 +88,16 @@ export const messagesService = {
     const stmt = db.prepare('SELECT COUNT(*) as count FROM messages')
     const { count } = stmt.get() as { count: number }
     return count
+  },
+
+  /**
+   * 删除留言
+   */
+  delete(id: number): void {
+    const stmt = db.prepare('DELETE FROM messages WHERE id = ?')
+    const result = stmt.run(id)
+    if (result.changes === 0) {
+      errors.notFound('留言不存在')
+    }
   },
 }

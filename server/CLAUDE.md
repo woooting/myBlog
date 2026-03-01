@@ -71,6 +71,7 @@ id/visitor_id/content/image_url/created_at
 |------|------|------|
 | GET | `/api/messages` | 列表（分页） |
 | POST | `/api/messages` | 创建 |
+| DELETE | `/api/messages/:id` | 删除 |
 
 ### 标签
 

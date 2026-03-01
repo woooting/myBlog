@@ -316,9 +316,10 @@ LIMIT ? OFFSET ?
 
 **Service 依赖**: 无
 
-**被引用位置** (2个):
+**被引用位置** (3个):
 - `server/api/messages/index.get.ts` - 获取留言列表
 - `server/api/messages/index.post.ts` - 创建留言
+- `server/api/messages/[id].delete.ts` - 删除留言
 
 **类型定义**:
 ```typescript
@@ -345,6 +346,7 @@ interface MessageWithUser extends Message {
 | `create(message)` | 创建留言 | - |
 | `getPaginated(options)` | 分页获取留言（带用户信息） | LEFT JOIN users |
 | `getCount()` | 获取留言总数 | - |
+| `delete(id)` | 删除留言 | - |
 
 **数据库操作详情**:
 ```sql

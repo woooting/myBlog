@@ -31,3 +31,18 @@ export const getMessagesQuerySchema = z.object({
  * 推导类型：获取留言列表的查询参数
  */
 export type GetMessagesQuery = z.infer<typeof getMessagesQuerySchema>
+
+/**
+ * 留言 ID 路径参数验证
+ */
+export const messageParamsSchema = z.object({
+  id: z.string()
+    .regex(/^\d+$/, 'ID 必须是数字')
+    .transform((val) => Number(val))
+    .refine((val) => val > 0, 'ID 必须大于 0'),
+})
+
+/**
+ * 推导类型：留言路径参数
+ */
+export type MessageParams = z.infer<typeof messageParamsSchema>

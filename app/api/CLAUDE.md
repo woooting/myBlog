@@ -361,10 +361,11 @@ interface PaginatedMessages {
 |------|------|-------|------|
 | `create(data)` | 创建留言 | ✅ | `content`: 内容（必填）<br>`image_url`: 图片 URL |
 | `getList(params)` | 获取留言列表（分页） | ❌ | `page`: 页码（必填）<br>`pageSize`: 每页数量（可选） |
+| `remove(id)` | 删除留言 | ✅ | `id`: 留言 ID |
 
 **使用示例**:
 ```typescript
-import { messagesApi } from '@app/api/messages.api'
+import * as messagesApi from '@app/api/messages.api'
 
 // 创建留言
 await messagesApi.create({
@@ -379,10 +380,14 @@ const result = await messagesApi.getList({
 })
 
 console.log(result.data)  // 留言数组
+
+// 删除留言
+await messagesApi.remove(1)
 ```
 
 **使用位置**:
 - `pages/message/index.vue` - 留言板页面
+- `pages/admin/system/messages.vue` - 消息管理页面
 
 **特性**:
 - 支持登录用户和访客留言

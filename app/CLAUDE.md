@@ -8,6 +8,7 @@
 
 - app\api 路径文件夹下所有文件都必须按照命名导入的方式在其他文件中导入，
   示例：import * as tagsApi from '@app/api/tags.api' 
+  **通过命名空间导入api文件后，可以使用  tagsApi.xxx来调用api文件中export出来的方法，无需对api文件解构获得方法** 示例：const response = await tagsApi.getList(params)
 - useapi文件(**路径：app\composables\useApi.ts**)中的useRequest方法是所有请求的基础封装，useRequest().request()会返回响应体中的data字段，例如
   响应体数据结构为`{success:xxx , code:xxxx ,message:xxx , data:xxx}`  则useRequest().request()的值为响应体中data属性的值
 
@@ -60,6 +61,7 @@
 | `/admin/system/editor` | `pages/admin/system/editor.vue` | 编辑器 |
 | `/admin/system/articles` | `pages/admin/system/articles.vue` | 文章管理 |
 | `/admin/system/tags` | `pages/admin/system/tags.vue` | 标签管理 |
+| `/admin/system/messages` | `pages/admin/system/messages.vue` | 消息管理 |
 | `/category/[PagePath]` | `pages/category/[PagePath].vue` | 分类列表 |
 | `/category/detail` | `pages/category/detail.vue` | 文章详情 |
 | `/message` | `pages/message/index.vue` | 留言列表 |
