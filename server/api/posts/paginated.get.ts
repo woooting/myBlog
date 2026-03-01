@@ -15,7 +15,10 @@ export default defineEventHandler(async (event) => {
   const query = await validateQuery(event, paginationQuerySchema)
 
   const { postsService } = await import('@server/services/posts.service')
-  const result = postsService.getPaginated(query)
+  const result = await postsService.getPaginated({
+    ...query,
+    withTags: true, // 返回标签信息
+  })
 
   return successResponse(result)
 })

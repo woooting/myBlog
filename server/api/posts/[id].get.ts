@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const { id } = await validateParams(event, postParamsSchema)
 
   const { postsService } = await import('@server/services/posts.service')
-  const post = postsService.getById(id)
+  const post = await postsService.getById(id)
 
   return successResponse(post)
 })

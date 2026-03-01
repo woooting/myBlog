@@ -5,10 +5,20 @@ import db from '../utils/db'
  */
 export interface Message {
   id?: number
-  visitor_id: string
+  user_id?: number
+  visitor_id?: string
   content: string
   image_url?: string
   created_at?: string
+}
+
+/**
+ * 留言列表项（包含用户信息）
+ */
+export interface MessageWithUser extends Message {
+  username?: string
+  user_avatar?: string
+  is_guest?: boolean
 }
 
 /**
@@ -21,25 +31,39 @@ export const messagesService = {
    */
   create(message: Omit<Message, 'id' | 'created_at'>) {
     const stmt = db.prepare(`
-      INSERT INTO messages (visitor_id, content, image_url)
-      VALUES (?, ?, ?)
+      INSERT INTO messages (user_id, visitor_id, content, image_url)
+      VALUES (?, ?, ?, ?)
     `)
-    return stmt.run(message.visitor_id, message.content, message.image_url || null)
+    return stmt.run(message.user_id || null, message.visitor_id || null, message.content, message.image_url || null)
   },
 
   /**
-   * 分页获取留言（按时间倒序）
+   * 分页获取留言（按时间倒序，包含用户信息）
    */
   getPaginated(options: { page?: number; pageSize?: number }) {
     const { page = 1, pageSize = 15 } = options
     const offset = (page - 1) * pageSize
 
     const stmt = db.prepare(`
-      SELECT * FROM messages
-      ORDER BY created_at DESC
+      SELECT
+        m.id,
+        m.user_id,
+        m.visitor_id,
+        m.content,
+        m.image_url,
+        m.created_at,
+        u.username,
+        u.avatar_url as user_avatar,
+        CASE
+          WHEN m.user_id IS NOT NULL THEN 0
+          ELSE 1
+        END as is_guest
+      FROM messages m
+      LEFT JOIN users u ON m.user_id = u.id
+      ORDER BY m.created_at DESC
       LIMIT ? OFFSET ?
     `)
-    const messages = stmt.all(pageSize, offset)
+    const messages = stmt.all(pageSize, offset) as MessageWithUser[]
 
     // 获取总数
     const countStmt = db.prepare('SELECT COUNT(*) as count FROM messages')

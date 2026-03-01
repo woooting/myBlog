@@ -16,9 +16,10 @@ export default defineEventHandler(async (event) => {
   const query = await validateQuery(event, getListQuerySchema)
 
   const { postsService } = await import('@server/services/posts.service')
-  const posts = postsService.getList({
+  const posts = await postsService.getList({
     status: query.status,
     category: query.category,
+    withTags: true, // 返回标签信息
   })
 
   return successResponse(posts)

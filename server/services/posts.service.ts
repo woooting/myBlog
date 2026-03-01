@@ -35,7 +35,7 @@ export const postsService = {
     )
   },
 
-  getList(options?: { status?: string; category?: string }) {
+  async getList(options?: { status?: string; category?: string; withTags?: boolean }) {
     let sql = 'SELECT * FROM posts WHERE 1=1'
     const params: any[] = []
 
@@ -51,7 +51,18 @@ export const postsService = {
 
     sql += ' ORDER BY created_at DESC'
     const stmt = db.prepare(sql)
-    return stmt.all(...params)
+    const posts = stmt.all(...params)
+
+    // 如果需要标签信息，为每篇文章附加标签（只返回名称数组）
+    if (options?.withTags && posts.length > 0) {
+      const { tagsService } = await import('./tags.service')
+      for (const post of posts as any[]) {
+        const tags = tagsService.getTagsByPostId(post.id) as Array<{ name: string }>
+        post.tags = tags.map((tag) => tag.name)
+      }
+    }
+
+    return posts
   },
 
   // 获取总数（用于分页）
@@ -75,11 +86,12 @@ export const postsService = {
   },
 
   // 分页查询
-  getPaginated(options: {
+  async getPaginated(options: {
     page?: number
     pageSize?: number
     status?: string
     category?: string
+    withTags?: boolean
   }) {
     const { page = 1, pageSize = 10 } = options
 
@@ -106,6 +118,15 @@ export const postsService = {
     const stmt = db.prepare(sql)
     const posts = stmt.all(...params)
 
+    // 如果需要标签信息，为每篇文章附加标签（只返回名称数组）
+    if (options?.withTags && posts.length > 0) {
+      const { tagsService } = await import('./tags.service')
+      for (const post of posts as any[]) {
+        const tags = tagsService.getTagsByPostId(post.id) as Array<{ name: string }>
+        post.tags = tags.map((tag) => tag.name)
+      }
+    }
+
     // 获取总数
     const total = this.getCount(options)
 
@@ -120,12 +141,20 @@ export const postsService = {
     }
   },
 
-  getById(id: number) {
+  async getById(id: number, options?: { withTags?: boolean }) {
     const stmt = db.prepare('SELECT * FROM posts WHERE id = ?')
     const post = stmt.get(id)
     if (!post) {
       errors.notFound('文章不存在')
     }
+
+    // 默认返回标签信息（可以通过 withTags: false 关闭）
+    if (options?.withTags !== false) {
+      const { tagsService } = await import('./tags.service')
+      const tags = tagsService.getTagsByPostId(id) as Array<{ name: string }>
+      ;(post as any).tags = tags.map((tag) => tag.name)
+    }
+
     return post
   },
 
