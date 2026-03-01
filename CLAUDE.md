@@ -114,7 +114,7 @@ server/                 # 后端（Nitro）
 
 ---
 
-## 其他文档
+## 其他文档（前后端添加新功能时，必须要阅读对应的前后claudemd来获取相关上下文）
 
 - **后端详细规范**：`server/CLAUDE.md`（数据库表结构、API 路由列表）
 - **前端组件列表**：`app/CLAUDE.md`（组件、Composables、页面路由）

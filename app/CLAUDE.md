@@ -4,6 +4,13 @@
 
 ---
 
+## 新功能实现规范
+
+- app\api 路径文件夹下所有文件都必须按照命名导入的方式在其他文件中导入，
+  示例：import * as tagsApi from '@app/api/tags.api' 
+- useapi文件(**路径：app\composables\useApi.ts**)中的useRequest方法是所有请求的基础封装，useRequest().request()会返回响应体中的data字段，例如
+  响应体数据结构为`{success:xxx , code:xxxx ,message:xxx , data:xxx}`  则useRequest().request()的值为响应体中data属性的值
+
 ## 已实现组件
 
 | 组件 | 位置 | 功能 |
@@ -14,6 +21,7 @@
 | `NavList` | `components/` | 导航列表 |
 | `MarkDownEditor` | `components/` | 富文本编辑器（TipTap） |
 | `TagSelector` | `components/` | 标签选择器 |
+| `Sidebar` | `components/` | 侧边栏（标签列表） |
 
 ---
 
@@ -51,6 +59,7 @@
 | `/admin` | `pages/admin/index.vue` | 管理后台首页 |
 | `/admin/system/editor` | `pages/admin/system/editor.vue` | 编辑器 |
 | `/admin/system/articles` | `pages/admin/system/articles.vue` | 文章管理 |
+| `/admin/system/tags` | `pages/admin/system/tags.vue` | 标签管理 |
 | `/category/[PagePath]` | `pages/category/[PagePath].vue` | 分类列表 |
 | `/category/detail` | `pages/category/detail.vue` | 文章详情 |
 | `/message` | `pages/message/index.vue` | 留言列表 |
@@ -62,6 +71,7 @@
 
 - `default.vue` - 默认布局（含侧边导航栏）
 - `admin.vue` - 管理后台布局
+- `login.vue` -登录页面布局
 
 ---
 
