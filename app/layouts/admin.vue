@@ -29,6 +29,11 @@ const adminNavList: NavItem[] = [
     iconname: 'lucide:tag',
   },
   {
+    name: '消息管理',
+    path: '/admin/system/messages',
+    iconname: 'lucide:message-square',
+  },
+  {
     name: 'editor',
     path: '/admin/system/editor',
     iconname: 'lucide:edit-3',
