@@ -8,7 +8,9 @@
         </div>
       </div>
       <div class="pagerouter"><NuxtPage /></div>
-      <div class="unkonwn">unkonwn</div>
+      <div class="sidebar-area">
+        <!-- <Sidebar /> -->123
+      </div>
     </div>
   </div>
 </template>
@@ -80,10 +82,18 @@ const navList: NavItem[] = [
     }
   }
 
-  .unkonwn {
+  .sidebar-area {
     width: 15rem;
     order: 3;
-    border: 1px solid black;
+    overflow-y: auto;
+
+    // 隐藏滚动条
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
   }
 
   // 响应式：收缩导航栏
@@ -94,6 +104,18 @@ const navList: NavItem[] = [
       .nav-area {
         width: 4rem;
       }
+    }
+
+    // 小屏幕隐藏右侧栏
+    .sidebar-area {
+      display: none;
+    }
+  }
+
+  // 中等屏幕调整右侧栏宽度
+  @media (max-width: 1200px) {
+    .sidebar-area {
+      width: 12rem;
     }
   }
 }

@@ -25,12 +25,13 @@
       "Bash(timeout:*)",
       "Bash(pnpm view:*)",
       "Bash(pnpm list:*)",
-      "Bash(pnpm config set:*)"
+      "Bash(pnpm config set:*)",
+      "mcp__ide__getDiagnostics"
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "node C:\\Users\\lijinghao\\.claude\\statusline.js"
   },
-  "outputStyle": "Learning"
+  "outputStyle": "Explanatory"
 }

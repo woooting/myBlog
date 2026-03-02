@@ -49,11 +49,26 @@ export default defineNitroPlugin(() => {
     )
   `)
 
+  // 创建 users 表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      github_id TEXT UNIQUE,
+      google_id TEXT UNIQUE,
+      email TEXT,
+      username TEXT,
+      avatar_url TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
   // 创建 messages 表
   db.exec(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      visitor_id TEXT NOT NULL,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      visitor_id TEXT,
       content TEXT NOT NULL,
       image_url TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -64,6 +79,21 @@ export default defineNitroPlugin(() => {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_messages_created_at
     ON messages(created_at DESC)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_messages_user_id
+    ON messages(user_id)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_github_id
+    ON users(github_id)
+  `)
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_google_id
+    ON users(google_id)
   `)
 
   // tags 表索引
@@ -104,5 +134,5 @@ export default defineNitroPlugin(() => {
     ON posts(created_at DESC)
   `)
 
-  console.log('✓ Database initialized: posts, tags, post_tags, messages tables')
+  console.log('✓ Database initialized: posts, tags, post_tags, users, messages tables')
 })

@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3'
 
+// 数据库连接：仅在开发环境开启 verbose 模式用于调试
 const db = new Database(process.env.DATABASE_PATH || './data/blog.db', {
-  // 显式设置使用 UTF-8 编码（解决 Windows 中文乱码问题）
-  verbose: console.log,
+  // 仅在需要调试 SQL 时开启，否则会大幅降低性能
+  // verbose: process.env.NODE_ENV === 'development' ? console.log : undefined,
 })
 
 // 启用 WAL 模式以提升并发性能
